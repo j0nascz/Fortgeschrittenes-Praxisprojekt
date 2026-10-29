@@ -1,34 +1,39 @@
-Protocol: AKI after Cardiac Surgery & Protein Intake
-Oct 26, 2026 
-Time: 4:30 pm · Location: Zoom Workplace
-Present: Tom Baumann, Aymen Feki, Yassine ben Ahmed, Ilyes ihidheb, Jonas Ziegler, Johannes Pillermann
+Minutes: AKI after Cardiac Surgery and Protein Intake
 
-Topics discussed
-•	Introduction: Wolfgang Hartl introduces himself 
-•	Introduces AKI: Talks about Symptoms Risk Factors and Prevention methods
-•	Talk about the effect of aomino acids and the effect of aomino adcids intake on Kidney Function
-• Introduction Research Question: 
-  Does the amount of aomino acids intake after Cardiac Surgery has impact on AKI
-•	Statistical Demanding Question: Some patients do not survive the operation (Death rate:10 -15%) 
-  -> If a patient dies the data doesn’t know if protein intake would have affected the kidney functions (selection bias)
-•	Introduction of primary and secondary outcome: 
-  Differentiate between new AKI diagnosed after day 4 after ICU admission and
-  new AKI diagonsed on days 5-6 after ICU admission
-•	Patiens who had AKI before operations are not included in data
-•	Data Set size: 350 Patiens (high Data Quality)
-•	High Recommandation to use Randomized Trials 
+Date: October 26, 2026 · Time: 4:30–[end] pm · Location: Zoom Workplace
+Present: Tom Baumann, Aymen Feki, Yassine Ben Ahmed, Ilyes Ihidheb, 
+        Jonas Ziegler, Johannes Piller, Prof. Dr. med. Wolfgang Hartl
 
-Decisions
-•	Future Statistical Question -> Reach out to Johannes Pillar
-•	Future Medical Question -> Reach out to Wolfgang Hartl
-•	Never Push Data into Github -> Exception file in the repo (store it locally)
-•	Don’t upload the Data on any KI-Tools
-•	Turn of Extensions like Co-pilot when working with Data
-•	Meetings with Johannes via Zoom either at 7 am or after 17 pm
 
-Open questions:
-• Learn about Differences between randomized and observed trials
-• Find a way to deal with the statistical demanding Question
+1. Research question
 
-Next meeting
-Date, time, location:
+Does the amount of amino acid intake after cardiac surgery affect the development of acute kidney injury (AKI)?
+Primary outcome: new AKI diagnosed within the first 4 days after ICU admission.
+Secondary outcome: new AKI diagnosed on days 5–6 after ICU admission.
+
+2. Data
+
+Dataset: 350 patients, high data quality.
+Patients with AKI before surgery are excluded.
+Statistical challenge: 
+10–15% of patients die after surgery. For these patients, 
+it cannot be observed whether protein intake would have affected kidney function (risk of selection bias).
+Randomized trials are the preferred design for this question.
+
+3. Decisions
+
+Statistical questions: contact Johannes Piller.
+Medical questions: contact Prof. Dr. Wolfgang Hartl.
+Data must never be pushed to GitHub. Store it locally and exclude it via .gitignore.
+Data must not be uploaded to any AI tools.
+AI extensions such as GitHub Copilot must be disabled when working with the data.
+
+4. Open questions
+
+Have a look at the dataset (randomized or not randomzied, observational or not observational)
+Approach for handling patients who die after surgery 
+
+5. Next meetings
+
+Meetings with Johannes Piller take place via Zoom at 7:00 am or after 5:00 pm.
+Next meeting: To be determined, location: Zoom.
