@@ -8,7 +8,7 @@ output:
 - **Date:** October 26, 2026
 - **Time:** 4:30–5:00 pm
 - **Location:** Zoom Workplace
-- **Present:** Tom Baumann, Aymen Feki, Yassine Ben Ahmed, Ilyes Ihidheb, Jonas Ziegler, Johannes Piller, Prof. Dr. med. Wolfgang Hartl
+- **Present:** Prof. Dr. med. Wolfgang Hartl, Johannes Piller, Tom Baumann, Aymen Feki, Yassine Ben Ahmed, Ilyes Ihidheb, Jonas Ziegler
 
 ## 1. Research question
 
