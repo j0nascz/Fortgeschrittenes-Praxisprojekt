@@ -5,5 +5,5 @@
 
 .Renviron
 .DS_Store
-data/raw/*
+data/*
 !data/raw/.gitkeep
