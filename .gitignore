@@ -5,10 +5,5 @@
 
 .Renviron
 .DS_Store
-<<<<<<< HEAD
-
-.sav
-=======
-data/raw/*
+data/*
 !data/raw/.gitkeep
->>>>>>> 11e7baf5ab1329c5c5ba1287c6afb72678ad5f93
