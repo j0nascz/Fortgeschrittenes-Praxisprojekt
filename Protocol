@@ -1,33 +1,34 @@
 Protocol: AKI after Cardiac Surgery & Protein Intake
 Oct 26, 2026 
-Time: 4:30 pm · Location: Zoom Workplace · Protocol: Jonas Ziegler
-Present: Tom Baumann, Aymen Feki, Yassine ben Ahmed, Ilyes ihidheb, Jonas Ziegler, Johannes Pillar
-Question: Does the amount of aomino acids intake after Cardiac Surgery has impact on AKI
+Time: 4:30 pm · Location: Zoom Workplace
+Present: Tom Baumann, Aymen Feki, Yassine ben Ahmed, Ilyes ihidheb, Jonas Ziegler, Johannes Pillermann
 
 Topics discussed
 •	Introduction: Wolfgang Hartl introduces himself 
 •	Introduces AKI: Talks about Symptoms Risk Factors and Prevention methods
 •	Talk about the effect of aomino acids and the effect of aomino adcids intake on Kidney Function
+• Introduction Research Question: 
+  Does the amount of aomino acids intake after Cardiac Surgery has impact on AKI
 •	Statistical Demanding Question: Some patients do not survive the operation (Death rate:10 -15%) 
   -> If a patient dies the data doesn’t know if protein intake would have affected the kidney functions (selection bias)
-•	Differentiate between any appearances of AKI and AKI specifically on the 5-6 day
+•	Introduction of primary and secondary outcome: 
+  Differentiate between new AKI diagnosed after day 4 after ICU admission and
+  new AKI diagonsed on days 5-6 after ICU admission
 •	Patiens who had AKI before operations are not included in data
-•	Differents in Age and Sex are not that important to look at 
 •	Data Set size: 350 Patiens (high Data Quality)
 •	High Recommandation to use Randomized Trials 
 
 Decisions
-•	Task: Learn about Differences between Randomized and Observed Trials
-•	Task: Find a way to deal with the problem that we can’t examine the data of patients who died right after the operation
 •	Future Statistical Question -> Reach out to Johannes Pillar
 •	Future Medical Question -> Reach out to Wolfgang Hartl
 •	Never Push Data into Github -> Exception file in the repo (store it locally)
 •	Don’t upload the Data on any KI-Tools
 •	Turn of Extensions like Co-pilot when working with Data
-•	Meetings with Johannes either at 7 am or after 17 pm
+•	Meetings with Johannes via Zoom either at 7 am or after 17 pm
 
-Tasks
+Open questions:
+• Learn about Differences between randomized and observed trials
+• Find a way to deal with the statistical demanding Question
 
-Open questions
 Next meeting
-Date, time, location: 
+Date, time, location:
