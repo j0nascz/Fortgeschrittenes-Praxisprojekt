@@ -1,34 +1,33 @@
-Protocol: AKI after Cardiac Surgery & Protein Intake
-Oct 26, 2026 
-Time: 4:30 pm · Location: Zoom Workplace
-Present: Tom Baumann, Aymen Feki, Yassine ben Ahmed, Ilyes ihidheb, Jonas Ziegler, Johannes Pillermann
+Minutes: AKI after Cardiac Surgery and Protein Intake
+
+Date: October 26, 2026 · Time: 4:30 pm · Location: Zoom Workplace
+Present: Tom Baumann, Aymen Feki, Yassine Ben Ahmed, Ilyes Ihidheb, Jonas Ziegler, Johannes Piller, Prof. Dr. med. Wolfgang Hartl
 
 Topics discussed
-•	Introduction: Wolfgang Hartl introduces himself 
-•	Introduces AKI: Talks about Symptoms Risk Factors and Prevention methods
-•	Talk about the effect of aomino acids and the effect of aomino adcids intake on Kidney Function
-• Introduction Research Question: 
-  Does the amount of aomino acids intake after Cardiac Surgery has impact on AKI
-•	Statistical Demanding Question: Some patients do not survive the operation (Death rate:10 -15%) 
-  -> If a patient dies the data doesn’t know if protein intake would have affected the kidney functions (selection bias)
-•	Introduction of primary and secondary outcome: 
-  Differentiate between new AKI diagnosed after day 4 after ICU admission and
-  new AKI diagonsed on days 5-6 after ICU admission
-•	Patiens who had AKI before operations are not included in data
-•	Data Set size: 350 Patiens (high Data Quality)
-•	High Recommandation to use Randomized Trials 
+
+Introduction to acute kidney injury (AKI): symptoms, risk factors and prevention.
+Effect of amino acid intake on kidney function.
+Research question: Does the amount of amino acid intake after cardiac surgery have an impact on the development of AKI?
+Statistical challenge: 10–15% of patients do not survive. For patients who die, the data cannot show whether protein intake would have affected kidney function (risk of selection bias).
+Primary and secondary outcomes: new AKI diagnosed within the first 4 days after ICU admission vs. new AKI diagnosed on days 5–6 after ICU admission.
+Patients with pre-existing AKI before surgery are excluded from the dataset.
+Dataset: 350 patients, high data quality.
+Randomized trials are strongly recommended as the gold standard for this type of question.
 
 Decisions
-•	Future Statistical Question -> Reach out to Johannes Pillar
-•	Future Medical Question -> Reach out to Wolfgang Hartl
-•	Never Push Data into Github -> Exception file in the repo (store it locally)
-•	Don’t upload the Data on any KI-Tools
-•	Turn of Extensions like Co-pilot when working with Data
-•	Meetings with Johannes via Zoom either at 7 am or after 17 pm
 
-Open questions:
-• Learn about Differences between randomized and observed trials
-• Find a way to deal with the statistical demanding Question
+Statistical questions: contact Johannes Piller.
+Medical questions: contact Prof. Dr. Wolfgang Hartl.
+Never push data to GitHub. Store it locally and exclude it from the repository via .gitignore.
+Do not upload the data to any AI tools.
+Disable AI extensions such as GitHub Copilot when working with the data.
+Meetings with Johannes take place via Zoom, either at 7:00 am or after 5:00 pm.
+
+Open questions
+
+Learn about the differences between randomized and observational studies.
+Find an approach to handle the statistical challenge (patients who die after surgery).
 
 Next meeting
-Date, time, location:
+
+Date, time, location: [to be determined]
