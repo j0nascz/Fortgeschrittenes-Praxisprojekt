@@ -1,0 +1,30 @@
+---
+title: "Zwischenpräsentation"
+subtitle: "Eine Einführung in die Datenanalyse"
+author: "Mein Name"
+format: revealjs
+---
+
+## Einführung
+
+Willkommen zu meiner Präsentation!
+
+- Thema 1
+- Thema 2
+- Thema 3
+
+## Datenanalyse mit R
+
+```{r}
+library(ggplot2)
+
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point() +
+  theme_minimal()
+```
+
+## Fazit
+
+- Ergebnis 1
+- Ergebnis 2
+- Ausblick

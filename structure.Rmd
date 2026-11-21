@@ -1,0 +1,76 @@
+---
+title: "Untitled"
+author: "Tom Baumann"
+date: "2026-11-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+# date
+
+1. topic introduction
+
+research question
+
+outcome: explain outcome variables
+
+exposure: explain...
+
+confounders: explain...
+
+DAG
+
+
+2. EXPLORATORY:
+
+missing values
+
+plot:density distribution of protein intake
+
+table: deaths vs aki
+
+3. METHODS:
+
+models
+
+logistic
+forrest plot:
+  crude
+    primary: average
+    primary: day 4
+    secondary: average
+    secondary: day 4
+  adjusted
+    primary: average
+    primary: day 4
+    secondary: average
+    secondary: day 4
+  
+stratified models
+
+4. results:
+
+role of oral feeding
+
+results regarding our research question (primary + second outcome)
+    
+    
+PROBLEMS WE FACED / DISCUSSION
+
+competing risks death (sensitivity analysis)
+
+is the oral protein intake relevant
+
+clinical condition is not measurable so we use confounders to explain it
+
+
+
+
+
+
+
