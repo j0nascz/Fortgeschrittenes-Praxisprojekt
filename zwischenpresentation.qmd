@@ -20,7 +20,6 @@ confounders: explain...
 
 ### DAG
 
-
 ## 2. EXPLORATORY
 
 ### missing values
@@ -31,13 +30,11 @@ confounders: explain...
 
 table: deaths vs aki
 
-
-
 ## 3. METHODS
 
 ### models
 
-logistic regression 
+logistic regression
 
 (plot logistic regression model + scatter plot)
 
@@ -47,34 +44,25 @@ multinomial model?
 
 ### models
 
-forrest plot:
-  crude
-    primary: average
-    primary: day 4
-    secondary: average
-    secondary: day 4
-  adjusted
-    primary: average
-    primary: day 4
-    secondary: average
-    secondary: day 4
-  
+forrest plot: crude primary: average primary: day 4 secondary: average secondary: day 4 adjusted primary: average primary: day 4 secondary: average secondary: day 4
+
 ## 3. METHODS
 
 ### sensitivity analysis
 
 forrest plot for one outcome, with sensitivity analysis
 
-## 4. discussion:
+## 4. Discussion:
 
-### role of oral feeding
+### Role of oral feeding 
+The days on exclusive oral feeding (days 1–4) are a marker of clinical condition: patients who are able to eat normally early on are more stable, do not require artificial nutrition and therefore receive hardly any artificial protein. This section shows (1) that oral feeding is associated with the patient's state of health, and (2) how strongly it affects the results for protein intake
 
 ## 4. discussion:
 
 ### role of oral feeding
 
 results regarding our research question (primary + second outcome)
-    
+
 
 ## 4. discussion:
 
@@ -85,5 +73,3 @@ competing risks death (sensitivity analysis)
 is the oral protein intake relevant
 
 clinical condition is not measurable so we use confounders to explain it
-
-
