@@ -1,0 +1,198 @@
+---
+title: "Zwischenpresentation"
+format: revealjs
+editor: visual
+---
+
+### 1. Introduction
+
+## Protein Intake and Acute Kidney Injury After Cardiac Surgery {.smaller}
+
+**Clinical background**
+
+- Acute kidney injury (AKI) is an important complication following major cardiac surgery.
+- Protein administration is essential in nutritional therapy for critically ill patients.
+- Optimal protein intake during the acute phase remains controversial.
+
+**Potential effects of protein intake**
+
+::::: columns
+::: {.column width="50%"}
+**Potential harm**
+
+Higher protein intake may worsen outcomes in patients with impaired kidney function.
+:::
+
+::: {.column width="50%"}
+**Potential benefit**
+
+Amino acid administration may have kidney-protective effects in certain patients.
+:::
+:::::
+
+<small>Source: Acute Kidney Injury Project Proposal (2026)</small>
+
+## Data Source: The SUSTAIN CSX Trial {.smaller}
+
+**Original study**
+
+- Multicenter, randomized, double-blind, placebo-controlled trial
+- Investigated high-dose selenium supplementation in cardiac surgery patients
+- Conducted from 2015 to 2021 at 23 centers in Germany and Canada
+- **1,416 patients randomized**
+
+**Our project: Post hoc analysis**
+
+- Subgroup with ICU stay ≥ 4 days
+- No kidney failure before surgery
+- Focus on protein intake and subsequent AKI
+
+<small>Sources: Stoppe et al. (2023); AKI Project Proposal (2026)</small>
+
+## Research Question {.smaller}
+
+**Is supplemental protein intake during the first four ICU days associated with the subsequent development of acute kidney injury (AKI)?**
+
+**Exposure**
+
+- Supplemental protein intake during ICU days 1–4
+
+**Primary outcome**
+
+- New AKI after day 4 until ICU discharge or in-ICU death
+
+**Secondary outcome**
+
+- New AKI on ICU days 5 or 6
+
+## Potential Confounders {.smaller}
+
+Protein intake was not randomized. Several factors may influence both protein administration and AKI risk.
+
+- **EuroSCORE II:** Preoperative operative risk
+- **BMI:** Body size and nutritional requirements
+- **Cardiopulmonary Bypass Duration (CPB Duration):** Surgical complexity and physiological stress
+- **SBP:** Blood pressure and circulatory stability
+- **Exclusive oral feeding:** Potential proxy for recovery and illness severity
+- **Illness severity:** Underlying patient condition (not directly measured)
+
+**Goal:** Identify possible confounding pathways and guide statistical adjustment.
+
+## DAG
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 12
+#| fig-height: 7
+#| out-width: "100%"
+
+library(dagitty)
+library(ggdag)
+library(ggplot2)
+
+dag <- dagitty('dag {
+  BMI -> Protein
+  BMI -> AKI
+
+  EuroScore -> Protein
+  EuroScore -> AKI
+
+  CPB -> Protein
+  CPB -> AKI
+
+  SBP -> Protein
+  SBP -> AKI
+
+  Severity -> Protein
+  Severity -> AKI
+  Severity -> OralFeeding
+
+  OralFeeding -> Protein
+
+  Protein -> AKI
+}')
+
+exposures(dag) <- "Protein"
+outcomes(dag) <- "AKI"
+
+coordinates(dag) <- list(
+  x = c(
+    BMI = 0,
+    Severity = 2,
+    EuroScore = 4,
+    OralFeeding = 0,
+    SBP = 2,
+    CPB = 4,
+    Protein = 1.5,
+    AKI = 4
+  ),
+  y = c(
+    BMI = 2,
+    Severity = 3,
+    EuroScore = 2,
+    OralFeeding = 1,
+    SBP = 1.5,
+    CPB = 1,
+    Protein = 0,
+    AKI = 0
+  )
+)
+
+ggdag(dag, text = FALSE, use_labels = "name") +
+  theme_dag() +
+  ggtitle("Proposed DAG: Supplemental Protein Intake and AKI")
+```
+
+## 2. EXPLORATORY
+
+### missing values
+
+## 2. EXPLORATORY
+
+### plot:density distribution of protein intake
+
+table: deaths vs aki
+
+## 3. METHODS
+
+### models
+
+logistic regression
+
+(plot logistic regression model + scatter plot)
+
+multinomial model?
+
+## 3. METHODS
+
+### models
+
+forrest plot: crude primary: average primary: day 4 secondary: average secondary: day 4 adjusted primary: average primary: day 4 secondary: average secondary: day 4
+
+## 3. METHODS
+
+### sensitivity analysis
+
+forrest plot for one outcome, with sensitivity analysis
+
+## 4. discussion:
+
+### role of oral feeding
+
+## 4. discussion:
+
+### role of oral feeding
+
+results regarding our research question (primary + second outcome)
+
+## 4. discussion:
+
+### PROBLEMS WE FACED / DISCUSSION
+
+competing risks death (sensitivity analysis)
+
+is the oral protein intake relevant
+
+clinical condition is not measurable so we use confounders to explain it
