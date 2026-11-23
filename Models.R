@@ -6,37 +6,18 @@ library(patchwork)
 data <- read_sav("data/raw/Datenbank_Praktikum_FINAL.sav")
 
 # Logistic Regression
-# Model A
+# unadjusted model
 
-model_a <- glm(
+model_unadjusted <- glm(
   AKI_any ~ Protein_intake__d1_4,
   data = data,
   family = binomial(link = "logit")
 )
 
-summary(model_a)
+summary(model_unadjusted)
 
-# Modell B – Präoperative und körperbezogene Faktoren
-model_b <- glm(AKI_any ~ Protein_intake__d1_4 +
-  EuroScore2 + BMI,
-  data = data,
-  family = binomial(link = "logit")
-)
-
-summary(model_b)
-
-# Modell C – Zusätzlich perioperative Faktoren
-model_c<- glm(AKI_any ~ Protein_intake__d1_4 +
-  EuroScore2 + BMI + SBP +
-  Duration_of_cardiopulmonary_bypass_minutes,
-  data = data,
-  family = binomial(link = "logit")
-)
-
-summary(model_c)
-
-# model D zusaätzlich ernährungssituation
-model_d<- glm(
+# adjusted model
+model_adjusted<- glm(
     AKI_any ~ Protein_intake__d1_4 +
     EuroScore2 +
     BMI +
@@ -47,91 +28,49 @@ model_d<- glm(
   family = binomial(link = "logit")
 )
 
-summary(model_d)
+summary(model_adjusted)
 
 # Plots
 
 # Unadjusted Model
 
-library(ggplot2)
-
-# Vorhergesagte Wahrscheinlichkeiten und Konfidenzintervalle
-pred_unadjusted <- data.frame(
-  Protein_intake__d1_4 = seq(
-    min(data$Protein_intake__d1_4, na.rm = TRUE),
-    max(data$Protein_intake__d1_4, na.rm = TRUE),
-    length.out = 200
-  )
-)
-
-pred_unadjusted$pred <- predict(
-  model_unadjusted,
-  newdata = pred_unadjusted,
-  type = "link",
-  se.fit = TRUE
-)$fit
-
-pred_unadjusted$se <- predict(
-  model_unadjusted,
-  newdata = pred_unadjusted,
-  type = "link",
-  se.fit = TRUE
-)$se.fit
-
-# 95%-Konfidenzintervall auf der Wahrscheinlichkeitsskala
-pred_unadjusted$prob <- plogis(pred_unadjusted$pred)
-
-pred_unadjusted$lower <- plogis(
-  pred_unadjusted$pred - 1.96 * pred_unadjusted$se
-)
-
-pred_unadjusted$upper <- plogis(
-  pred_unadjusted$pred + 1.96 * pred_unadjusted$se
-)
-
-# Plot
-plot_unadjusted <- ggplot() +
+ggplot(data, aes(x = Protein_intake__d1_4, y = AKI_any)) +
   geom_jitter(
-    data = data,
-    aes(x = Protein_intake__d1_4, y = AKI_any),
-    height = 0.04,
     width = 0,
-    alpha = 0.4
+    height = 0.04,
+    alpha = 0.4,
+    size = 2
   ) +
-  geom_ribbon(
-    data = pred_unadjusted,
-    aes(
-      x = Protein_intake__d1_4,
-      ymin = lower,
-      ymax = upper
-    ),
-    fill = "steelblue",
-    alpha = 0.2
-  ) +
-  geom_line(
-    data = pred_unadjusted,
-    aes(x = Protein_intake__d1_4, y = prob),
-    color = "steelblue",
-    linewidth = 1.2
+  stat_smooth(
+    method = "glm",
+    method.args = list(family = binomial(link = "logit")),
+    se = TRUE,
+    color = "blue",
+    linewidth = 1
   ) +
   labs(
-    title = "Unadjusted Logistic Regression",
-    x = "Protein intake (g/kg/day)",
+    title = "Unadjusted association between protein intake and AKI",
+    x = "Average artificial protein intake (g/kg/day)",
     y = "Probability of AKI"
   ) +
-  scale_y_continuous(limits = c(0, 1)) +
+  scale_y_continuous(
+    breaks = c(0, 0.25, 0.5, 0.75, 1),
+    limits = c(-0.05, 1.05)
+  ) +
   theme_minimal()
 
-plot_unadjusted
 
-# Adjusted Model
 
-# Vorhersagedaten erstellen
-pred_adjusted <- data.frame(
+
+# adjusted model
+
+
+# Prediction data
+prediction_data <- data.frame(
   Protein_intake__d1_4 = seq(
     min(data$Protein_intake__d1_4, na.rm = TRUE),
     max(data$Protein_intake__d1_4, na.rm = TRUE),
-    length.out = 200
+    length.out = 100
   ),
   EuroScore2 = mean(data$EuroScore2, na.rm = TRUE),
   BMI = mean(data$BMI, na.rm = TRUE),
@@ -142,159 +81,56 @@ pred_adjusted <- data.frame(
     mean(data$days_onexclusive_oral_feeding, na.rm = TRUE)
 )
 
-# Vorhersage inklusive Standardfehler
-pred_result <- predict(
+# Predictions on the log-odds scale, including standard errors
+pred <- predict(
   model_adjusted,
-  newdata = pred_adjusted,
+  newdata = prediction_data,
   type = "link",
   se.fit = TRUE
 )
 
-pred_adjusted$prob <- plogis(pred_result$fit)
-
-pred_adjusted$lower <- plogis(
-  pred_result$fit - 1.96 * pred_result$se.fit
-)
-
-pred_adjusted$upper <- plogis(
-  pred_result$fit + 1.96 * pred_result$se.fit
-)
+# Convert predictions and confidence limits to probabilities
+prediction_data$predicted <- plogis(pred$fit)
+prediction_data$lower <- plogis(pred$fit - 1.96 * pred$se.fit)
+prediction_data$upper <- plogis(pred$fit + 1.96 * pred$se.fit)
 
 # Plot
-plot_adjusted <- ggplot() +
+ggplot() +
   geom_jitter(
     data = data,
     aes(x = Protein_intake__d1_4, y = AKI_any),
-    height = 0.04,
     width = 0,
-    alpha = 0.4
+    height = 0.04,
+    alpha = 0.35,
+    size = 2
   ) +
   geom_ribbon(
-    data = pred_adjusted,
+    data = prediction_data,
     aes(
       x = Protein_intake__d1_4,
       ymin = lower,
       ymax = upper
     ),
-    fill = "darkorange",
+    fill = "grey30",
     alpha = 0.2
   ) +
   geom_line(
-    data = pred_adjusted,
-    aes(x = Protein_intake__d1_4, y = prob),
-    color = "darkorange",
-    linewidth = 1.2
+    data = prediction_data,
+    aes(x = Protein_intake__d1_4, y = predicted),
+    color = "blue",
+    linewidth = 1
   ) +
   labs(
-    title = "Adjusted Logistic Regression",
+    title = "Adjusted association between protein intake and AKI",
     subtitle = "Confounders held constant at their mean values",
-    x = "Protein intake (g/kg/day)",
-    y = "Probability of AKI"
+    x = "Average artificial protein intake (g/kg/day)",
+    y = "Predicted probability of AKI"
   ) +
-  scale_y_continuous(limits = c(0, 1)) +
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.2),
+    limits = c(0, 1)
+  ) +
   theme_minimal()
-
-plot_adjusted
-
-# both plots
-
-
-
-plot_unadjusted + plot_adjusted
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Sensitivity Analysis
-
-model_unadjusted_sens <- glm(
-  AKI_any_sensitivity_worst_case ~ Protein_intake__d1_4,
-  data = data,
-  family = binomial(link = "logit")
-)
-
-summary(model_unadjusted_sens)
-
-model_adjusted_sens <- glm(
-  AKI_any_sensitivity_worst_case ~ Protein_intake__d1_4 +
-    EuroScore2 +
-    BMI +
-    Duration_of_cardiopulmonary_bypass_minutes +
-    SBP +
-    days_onexclusive_oral_feeding,
-  data = data,
-  family = binomial(link = "logit")
-)
-
-summary(model_adjusted_sens)
-
-
-# odds ratio models with confidence intervalls
-
-exp(cbind(
-  OR = coef(model_unadjusted),
-  confint(model_unadjusted)
-))
-
-exp(cbind(
-  OR = coef(model_adjusted),
-  confint(model_adjusted)
-))
-
-# relation oral feedin protein intake
-
-cor(
-  data$Protein_intake__d1_4,
-  data$days_onexclusive_oral_feeding,
-  use = "complete.obs",
-  method = "pearson"
-)
-
-
-
-
-# schrittweise adjustierung
-
-model_1 <- glm(
-  AKI_any ~ Protein_intake__d1_4,
-  data = data,
-  family = binomial
-)
-
-model_2 <- glm(
-  AKI_any ~ Protein_intake__d1_4 +
-    EuroScore2 + BMI,
-  data = data,
-  family = binomial
-)
-
-model_3 <- glm(
-  AKI_any ~ Protein_intake__d1_4 +
-    EuroScore2 + BMI +
-    Duration_of_cardiopulmonary_bypass_minutes +
-    SBP,
-  data = data,
-  family = binomial
-)
-
-model_4 <- glm(
-  AKI_any ~ Protein_intake__d1_4 +
-    EuroScore2 + BMI +
-    Duration_of_cardiopulmonary_bypass_minutes +
-    SBP +
-    days_onexclusive_oral_feeding,
-  data = data,
-  family = binomial
-)
 
 
 
