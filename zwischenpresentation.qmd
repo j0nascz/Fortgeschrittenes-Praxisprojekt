@@ -82,7 +82,9 @@ results regarding our research question (primary + second outcome)
 
 competing risks death (sensitivity analysis)
 
-is the oral protein intake relevant
+is the oral protein intake relevant?
+
+right skewed distribution of protein intake
 
 clinical condition is not measurable so we use confounders to explain it
 
