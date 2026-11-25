@@ -1,0 +1,1638 @@
+
+---
+title: "Statistical Modeling and Sensitivity Analysis"
+subtitle: "Artificial Protein Intake and Acute Kidney Injury | SUSTAIN CSX"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 9,
+  fig.height = 5,
+  dpi = 150,
+  out.width = "100%"
+)
+
+source("Packages.R")
+source("data.R")
+
+blue <- "#3B82F6"
+red <- "#EF4444"
+grey <- "#64748B"
+
+set.seed(2026)
+
+# ============================================================
+# HELPERS
+# ============================================================
+
+to_numeric <- function(x) {
+  suppressWarnings(as.numeric(as.character(x)))
+}
+
+to_binary <- function(x, name) {
+  y <- to_numeric(x)
+
+  if (
+    any(!is.na(x) & is.na(y)) ||
+    any(!is.na(y) & !y %in% c(0, 1))
+  ) {
+    stop("Invalid binary coding in: ", name)
+  }
+
+  y
+}
+
+# Odds ratios and Wald 95% confidence intervals
+get_or_table <- function(model) {
+
+  coefficients <- summary(model)$coefficients
+
+  tibble::tibble(
+    Variable = rownames(coefficients),
+    Estimate = coefficients[, "Estimate"],
+    SE = coefficients[, "Std. Error"],
+    OR = exp(Estimate),
+    CI_lower = exp(Estimate - 1.96 * SE),
+    CI_upper = exp(Estimate + 1.96 * SE),
+    p_value = coefficients[, "Pr(>|z|)"]
+  )
+}
+
+extract_protein <- function(model, label) {
+
+  get_or_table(model) %>%
+    filter(Variable == "Protein_01") %>%
+    mutate(Model = label) %>%
+    select(Model, OR, CI_lower, CI_upper, p_value)
+}
+
+show_or_table <- function(results, caption) {
+
+  results %>%
+    mutate(
+      across(
+        any_of(c("OR", "CI_lower", "CI_upper")),
+        ~ round(.x, 3)
+      ),
+      across(
+        any_of("p_value"),
+        ~ signif(.x, 3)
+      )
+    ) %>%
+    knitr::kable(caption = caption)
+}
+
+check_model <- function(model, label) {
+
+  valid <- isTRUE(model$converged) &&
+    all(is.finite(coef(model))) &&
+    all(is.finite(vcov(model)))
+
+  if (!valid) {
+    warning("Potentially unstable model: ", label)
+  }
+
+  valid
+}
+
+theme_report <- function() {
+  theme_minimal(base_size = 12) +
+    theme(
+      plot.title = element_text(face = "bold"),
+      strip.text = element_text(face = "bold")
+    )
+}
+
+# ============================================================
+# PREDICTION PERFORMANCE FUNCTIONS
+# ============================================================
+
+# AUC calculated using the rank-based definition
+calculate_auc <- function(y, p) {
+
+  keep <- is.finite(p) & !is.na(y)
+  y <- y[keep]
+  p <- p[keep]
+
+  n1 <- sum(y == 1)
+  n0 <- sum(y == 0)
+
+  if (n1 == 0 || n0 == 0) {
+    return(NA_real_)
+  }
+
+  ranks <- rank(p, ties.method = "average")
+
+  (
+    sum(ranks[y == 1]) -
+      n1 * (n1 + 1) / 2
+  ) / (n1 * n0)
+}
+
+calculate_metrics <- function(y, p) {
+
+  keep <- !is.na(y) & is.finite(p)
+  y <- y[keep]
+  p <- p[keep]
+
+  p_safe <- pmin(pmax(p, 1e-12), 1 - 1e-12)
+
+  tibble::tibble(
+    Patients = length(y),
+    AKI_events = sum(y == 1),
+    AUC = calculate_auc(y, p),
+    Brier = mean((y - p)^2),
+    Log_loss = -mean(
+      y * log(p_safe) +
+        (1 - y) * log(1 - p_safe)
+    )
+  )
+}
+
+# Reproducible stratified training/test split
+stratified_split <- function(y, train_fraction = 0.8) {
+
+  train_ids <- unlist(
+    lapply(
+      split(seq_along(y), y),
+      function(ids) {
+
+        n_train <- floor(
+          length(ids) * train_fraction
+        )
+
+        n_train <- max(
+          1,
+          min(n_train, length(ids) - 1)
+        )
+
+        sample(ids, n_train)
+      }
+    ),
+    use.names = FALSE
+  )
+
+  sort(train_ids)
+}
+
+# Reproducible stratified CV folds
+stratified_folds <- function(y, k) {
+
+  fold <- integer(length(y))
+
+  for (group in unique(y)) {
+
+    ids <- which(y == group)
+
+    fold[ids] <- sample(
+      rep(seq_len(k), length.out = length(ids))
+    )
+  }
+
+  fold
+}
+
+# Standardized predictions over patient covariates
+standardized_curve <- function(model, sample_data, grid) {
+
+  bind_rows(
+    lapply(grid, function(p) {
+
+      new_data <- sample_data %>%
+        mutate(Protein_01 = p / 0.1)
+
+      tibble::tibble(
+        Protein = p,
+        Probability = mean(
+          predict(
+            model,
+            newdata = new_data,
+            type = "response"
+          )
+        )
+      )
+    })
+  )
+}
+
+# ============================================================
+# DATA VALIDATION
+# ============================================================
+
+required_vars <- c(
+  "AKI_any",
+  "AKI_any_early",
+  "AKI_any_sensitivity_worst_case",
+  "Protein_intake__d1_4",
+  "EuroScore2",
+  "Duration_of_cardiopulmonary_bypass_minutes",
+  "BMI",
+  "days_onexclusive_oral_feeding",
+  "died_in_ICU"
+)
+
+missing_vars <- setdiff(required_vars, names(data))
+
+if (length(missing_vars) > 0) {
+  stop(
+    "Missing columns: ",
+    paste(missing_vars, collapse = ", ")
+  )
+}
+
+regression_data <- data %>%
+  transmute(
+    AKI_primary = to_binary(AKI_any, "AKI_any"),
+
+    AKI_day56 = to_binary(
+      AKI_any_early,
+      "AKI_any_early"
+    ),
+
+    AKI_worst = to_binary(
+      AKI_any_sensitivity_worst_case,
+      "AKI_any_sensitivity_worst_case"
+    ),
+
+    Protein = to_numeric(Protein_intake__d1_4),
+    EuroScore2 = to_numeric(EuroScore2),
+
+    CPB = to_numeric(
+      Duration_of_cardiopulmonary_bypass_minutes
+    ),
+
+    BMI = to_numeric(BMI),
+
+    Oral_days = to_numeric(
+      days_onexclusive_oral_feeding
+    ),
+
+    ICU_death = case_when(
+      as.character(died_in_ICU) == "Yes" ~ 1L,
+      as.character(died_in_ICU) == "No" ~ 0L,
+      TRUE ~ NA_integer_
+    )
+  ) %>%
+  mutate(
+    Protein_01 = Protein / 0.1,
+    CPB_30 = CPB / 30
+  )
+
+if (
+  any(regression_data$Protein < 0, na.rm = TRUE) ||
+  any(regression_data$CPB < 0, na.rm = TRUE)
+) {
+  stop("Negative protein intake or CPB duration detected.")
+}
+
+formula_unadjusted <- AKI_primary ~ Protein_01
+
+formula_core <- AKI_primary ~
+  Protein_01 + EuroScore2 + CPB_30
+```
+
+# 1. Research Objective
+
+## Research Question
+
+Is artificially administered protein intake during ICU days 1–4 associated with AKI after day 4, after adjustment for preoperative risk and surgical complexity?
+
+Artificial protein intake was not randomized. The analysis therefore estimates an observational association rather than a causal treatment effect.
+
+## Outcomes and Covariates
+
+| Role | Variable | Interpretation |
+|---|---|---|
+| Exposure | `Protein_intake__d1_4` | Mean artificial protein intake, g/kg/day |
+| Primary outcome | `AKI_any` | New AKI after day 4 |
+| Secondary outcome | `AKI_any_early` | New AKI on days 5–6 |
+| Sensitivity outcome | `AKI_any_sensitivity_worst_case` | Worst-case handling of ICU death |
+| Core covariate | `EuroScore2` | Preoperative surgical risk |
+| Core covariate | CPB duration | Intraoperative exposure |
+| Additional covariate | `BMI` | Preoperative patient characteristic |
+| Exploratory covariate | Oral-feeding days | Feeding status during days 1–4 |
+
+The primary model uses continuous artificial protein intake, EuroSCORE II and CPB duration.
+
+Protein associations are reported per 0.1 g/kg/day; CPB associations per 30 minutes.
+
+# 2. Analysis Population
+
+## 2.1 Available Observations
+
+```{r population-summary}
+population_summary <- regression_data %>%
+  summarise(
+    Patients = n(),
+    Primary_events = sum(AKI_primary == 1, na.rm = TRUE),
+    Secondary_events = sum(AKI_day56 == 1, na.rm = TRUE),
+    Worst_case_events = sum(AKI_worst == 1, na.rm = TRUE)
+  )
+
+knitr::kable(
+  population_summary,
+  caption = "Study population and AKI events"
+)
+```
+
+## 2.2 Complete Cases for the Core Model
+
+Both primary development models use the same complete-case sample.
+
+```{r complete-cases}
+model_data <- regression_data %>%
+  filter(
+    !is.na(AKI_primary),
+    !is.na(Protein_01),
+    !is.na(EuroScore2),
+    !is.na(CPB_30)
+  )
+
+n_events <- sum(model_data$AKI_primary == 1)
+n_nonevents <- sum(model_data$AKI_primary == 0)
+
+if (n_events < 2 || n_nonevents < 2) {
+  stop(
+    "Too few events or non-events for ",
+    "a training/test split."
+  )
+}
+
+model_sample_summary <- tibble::tibble(
+  Measure = c(
+    "Total eligible patients",
+    "Complete cases",
+    "Excluded due to missing core model variables",
+    "AKI events",
+    "Non-AKI patients",
+    "AKI proportion (%)"
+  ),
+  Value = c(
+    as.character(nrow(regression_data)),
+    as.character(nrow(model_data)),
+    as.character(
+      nrow(regression_data) - nrow(model_data)
+    ),
+    as.character(n_events),
+    as.character(n_nonevents),
+    sprintf(
+      "%.1f",
+      100 * mean(model_data$AKI_primary)
+    )
+  )
+)
+
+knitr::kable(
+  model_sample_summary,
+  align = c("l", "r"),
+  caption = "Primary model analysis sample"
+)
+```
+
+# 3. Training and Test Sets
+
+## 3.1 Stratified Split
+
+We randomly allocate approximately 80% of patients to training and 20% to testing, stratified by primary AKI status.
+
+Stratification maintains representation of both AKI and non-AKI patients in each subset.
+
+The test set is not used for model fitting or cross-validation.
+
+```{r train-test-split}
+set.seed(2026)
+
+train_ids <- stratified_split(
+  model_data$AKI_primary,
+  train_fraction = 0.8
+)
+
+train_data <- model_data[train_ids, , drop = FALSE]
+
+test_data <- model_data[
+  -train_ids,
+  ,
+  drop = FALSE
+]
+
+split_summary <- bind_rows(
+  train_data %>%
+    summarise(
+      Sample = "Training",
+      Patients = n(),
+      AKI_events = sum(AKI_primary == 1),
+      Non_AKI = sum(AKI_primary == 0)
+    ),
+
+  test_data %>%
+    summarise(
+      Sample = "Testing",
+      Patients = n(),
+      AKI_events = sum(AKI_primary == 1),
+      Non_AKI = sum(AKI_primary == 0)
+    )
+)
+
+knitr::kable(
+  split_summary,
+  caption = "Stratified training and test sets"
+)
+
+if (min(
+  sum(test_data$AKI_primary == 1),
+  sum(test_data$AKI_primary == 0)
+) < 5) {
+  cat(
+    "\n\n**Caution:** The test set contains fewer than ",
+    "five patients in at least one outcome class. ",
+    "Test performance estimates may be very unstable."
+  )
+}
+```
+
+The split is used for evaluating prediction performance. It is not necessary for unbiased estimation of a prespecified observational regression association.
+
+# 4. Model Development on Training Data
+
+## 4.1 Unadjusted Logistic Regression
+
+```{r train-unadjusted}
+model_unadjusted_train <- glm(
+  formula_unadjusted,
+  data = train_data,
+  family = binomial()
+)
+
+check_model(
+  model_unadjusted_train,
+  "Training unadjusted model"
+)
+
+show_or_table(
+  get_or_table(model_unadjusted_train) %>%
+    filter(Variable != "(Intercept)"),
+  "Unadjusted logistic regression: training sample"
+)
+```
+
+## 4.2 Core Adjusted Logistic Regression
+
+```{r train-adjusted}
+model_adjusted_train <- glm(
+  formula_core,
+  data = train_data,
+  family = binomial()
+)
+
+check_model(
+  model_adjusted_train,
+  "Training adjusted model"
+)
+
+show_or_table(
+  get_or_table(model_adjusted_train) %>%
+    filter(Variable != "(Intercept)"),
+  "Adjusted logistic regression: training sample"
+)
+```
+
+## 4.3 Protein Association Comparison
+
+```{r train-model-comparison, fig.width=9, fig.height=4.5}
+train_comparison <- bind_rows(
+  extract_protein(
+    model_unadjusted_train,
+    "Unadjusted"
+  ),
+  extract_protein(
+    model_adjusted_train,
+    "Adjusted: EuroSCORE II + CPB"
+  )
+)
+
+show_or_table(
+  train_comparison,
+  "Protein association in training models"
+)
+
+p_train_forest <- ggplot(
+  train_comparison,
+  aes(x = OR, y = Model)
+) +
+  geom_vline(
+    xintercept = 1,
+    linetype = "dashed",
+    color = grey
+  ) +
+  geom_segment(
+    aes(
+      x = CI_lower,
+      xend = CI_upper,
+      yend = Model
+    ),
+    linewidth = 0.9,
+    color = blue
+  ) +
+  geom_point(
+    color = blue,
+    size = 3
+  ) +
+  scale_x_log10() +
+  labs(
+    title = "Unadjusted vs Adjusted Protein Association",
+    subtitle = "Training sample; OR per 0.1 g/kg/day",
+    x = "Odds ratio (log scale)",
+    y = NULL
+  ) +
+  theme_report()
+
+print(p_train_forest)
+```
+
+The estimated change between models may partly reflect measured risk differences. Changes in logistic-regression odds ratios cannot be attributed entirely to confounding because odds ratios are non-collapsible.
+
+# 5. Cross-Validation
+
+## 5.1 Stratified K-Fold Cross-Validation
+
+Cross-validation evaluates how well the predefined model performs on patients excluded from each fold's model fitting.
+
+For each fold:
+
+1. Fit the model using the remaining training folds.
+2. Predict AKI probabilities for the excluded fold.
+3. Collect the out-of-fold predictions.
+4. Calculate performance metrics.
+
+The held-out test set remains untouched throughout this process.
+
+```{r cross-validation}
+set.seed(2026)
+
+# At most five folds, respecting the smallest outcome class
+k <- min(
+  5L,
+  as.integer(min(table(train_data$AKI_primary)))
+)
+
+if (k < 2L) {
+  stop(
+    "Insufficient AKI events or non-events ",
+    "for stratified cross-validation."
+  )
+}
+
+cv_folds <- stratified_folds(
+  train_data$AKI_primary,
+  k
+)
+
+cv_predictions <- train_data %>%
+  mutate(
+    Fold = cv_folds,
+    CV_unadjusted = NA_real_,
+    CV_adjusted = NA_real_
+  )
+
+for (fold in seq_len(k)) {
+
+  cv_train <- train_data[
+    cv_folds != fold,
+    ,
+    drop = FALSE
+  ]
+
+  cv_valid <- train_data[
+    cv_folds == fold,
+    ,
+    drop = FALSE
+  ]
+
+  cv_model_unadjusted <- glm(
+    formula_unadjusted,
+    data = cv_train,
+    family = binomial()
+  )
+
+  cv_model_adjusted <- glm(
+    formula_core,
+    data = cv_train,
+    family = binomial()
+  )
+
+  cv_predictions$CV_unadjusted[cv_folds == fold] <-
+    predict(
+      cv_model_unadjusted,
+      newdata = cv_valid,
+      type = "response"
+    )
+
+  cv_predictions$CV_adjusted[cv_folds == fold] <-
+    predict(
+      cv_model_adjusted,
+      newdata = cv_valid,
+      type = "response"
+    )
+}
+
+# Evaluate pooled out-of-fold predictions
+cv_results <- bind_rows(
+  calculate_metrics(
+    cv_predictions$AKI_primary,
+    cv_predictions$CV_unadjusted
+  ) %>%
+    mutate(Model = "Unadjusted"),
+
+  calculate_metrics(
+    cv_predictions$AKI_primary,
+    cv_predictions$CV_adjusted
+  ) %>%
+    mutate(Model = "Core adjusted")
+) %>%
+  select(
+    Model,
+    Patients,
+    AKI_events,
+    AUC,
+    Brier,
+    Log_loss
+  )
+
+knitr::kable(
+  cv_results,
+  digits = 3,
+  caption = paste0(
+    k,
+    "-fold cross-validation performance"
+  )
+)
+```
+
+AUC measures discrimination. The Brier score measures the mean squared error of predicted probabilities, and log loss penalizes incorrect confident predictions.
+
+For AUC, higher is better; for Brier score and log loss, lower is better.
+
+These metrics assess prediction, not whether the protein coefficient has a causal interpretation.
+
+## 5.2 Cross-Validated Calibration
+
+```{r cv-calibration, fig.width=9, fig.height=5}
+cv_calibration <- cv_predictions %>%
+  transmute(
+    Observed = AKI_primary,
+    Unadjusted = CV_unadjusted,
+    Adjusted = CV_adjusted
+  ) %>%
+  pivot_longer(
+    cols = c(Unadjusted, Adjusted),
+    names_to = "Model",
+    values_to = "Predicted"
+  ) %>%
+  group_by(Model) %>%
+  mutate(
+    Bin = dplyr::ntile(
+      Predicted,
+      min(5L, n())
+    )
+  ) %>%
+  group_by(Model, Bin) %>%
+  summarise(
+    Mean_predicted = mean(Predicted),
+    Observed_risk = mean(Observed),
+    Patients = n(),
+    .groups = "drop"
+  )
+
+p_cv_calibration <- ggplot(
+  cv_calibration,
+  aes(
+    x = Mean_predicted,
+    y = Observed_risk
+  )
+) +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed",
+    color = grey
+  ) +
+  geom_point(
+    aes(size = Patients),
+    color = blue
+  ) +
+  facet_wrap(~ Model) +
+  coord_equal(
+    xlim = c(0, 1),
+    ylim = c(0, 1)
+  ) +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Cross-Validated Calibration",
+    subtitle = "Observed versus out-of-fold predicted AKI",
+    x = "Mean predicted probability",
+    y = "Observed AKI proportion",
+    size = "Patients"
+  ) +
+  theme_report()
+
+print(p_cv_calibration)
+```
+
+With limited events, individual calibration bins can contain few AKI cases. This plot is exploratory and should not be interpreted as a precise calibration assessment.
+
+# 6. Held-Out Test-Set Evaluation
+
+Both training models are applied to patients who were excluded from model development and cross-validation.
+
+No test-set observations are used to refit either model.
+
+```{r test-evaluation}
+test_predictions <- test_data %>%
+  mutate(
+    Pred_unadjusted = predict(
+      model_unadjusted_train,
+      newdata = test_data,
+      type = "response"
+    ),
+
+    Pred_adjusted = predict(
+      model_adjusted_train,
+      newdata = test_data,
+      type = "response"
+    )
+  )
+
+test_results <- bind_rows(
+  calculate_metrics(
+    test_predictions$AKI_primary,
+    test_predictions$Pred_unadjusted
+  ) %>%
+    mutate(Model = "Unadjusted"),
+
+  calculate_metrics(
+    test_predictions$AKI_primary,
+    test_predictions$Pred_adjusted
+  ) %>%
+    mutate(Model = "Core adjusted")
+) %>%
+  select(
+    Model,
+    Patients,
+    AKI_events,
+    AUC,
+    Brier,
+    Log_loss
+  )
+
+knitr::kable(
+  test_results,
+  digits = 3,
+  caption = "Performance on the held-out test set"
+)
+```
+
+## 6.1 Cross-Validation versus Test Performance
+
+```{r validation-comparison}
+validation_comparison <- bind_rows(
+  cv_results %>%
+    mutate(Evaluation = "Cross-validation"),
+
+  test_results %>%
+    mutate(Evaluation = "Test set")
+) %>%
+  select(
+    Evaluation,
+    Model,
+    Patients,
+    AKI_events,
+    AUC,
+    Brier,
+    Log_loss
+  )
+
+knitr::kable(
+  validation_comparison,
+  digits = 3,
+  caption = "Internal validation performance comparison"
+)
+```
+
+Test performance may be unstable if the test set is small. A favorable result on one random split is not sufficient to establish external validity.
+
+# 7. Final Primary Association Analysis
+
+For the scientific association analysis, we now refit the prespecified models using **all complete cases**.
+
+This improves precision compared with reporting coefficients from the training subset alone.
+
+The following models are intended for inference about the observed protein–AKI association, not as independent test-set predictions.
+
+## 7.1 Final Unadjusted and Adjusted Models
+
+```{r final-models}
+model_unadjusted <- glm(
+  formula_unadjusted,
+  data = model_data,
+  family = binomial()
+)
+
+model_adjusted <- glm(
+  formula_core,
+  data = model_data,
+  family = binomial()
+)
+
+check_model(
+  model_unadjusted,
+  "Final unadjusted model"
+)
+
+check_model(
+  model_adjusted,
+  "Final adjusted model"
+)
+
+final_results <- bind_rows(
+  extract_protein(
+    model_unadjusted,
+    "Unadjusted"
+  ),
+  extract_protein(
+    model_adjusted,
+    "Core adjusted"
+  )
+)
+
+show_or_table(
+  final_results,
+  "Final protein association using all complete cases"
+)
+
+show_or_table(
+  get_or_table(model_adjusted) %>%
+    filter(Variable != "(Intercept)"),
+  "Final adjusted regression coefficients"
+)
+```
+
+## 7.2 Observed Outcomes and Adjusted Fitted Curve
+
+Blue points represent patients without AKI and red points represent patients with AKI.
+
+The black curve shows the model-estimated AKI probability, standardized over the observed EuroSCORE II and CPB duration distributions.
+
+```{r observed-fitted-plot, fig.width=10, fig.height=5.5}
+protein_grid <- seq(
+  min(model_data$Protein),
+  max(model_data$Protein),
+  length.out = 150
+)
+
+fitted_curve <- standardized_curve(
+  model_adjusted,
+  model_data,
+  protein_grid
+)
+
+p_observed_fitted <- ggplot() +
+
+  geom_jitter(
+    data = model_data,
+    aes(
+      x = Protein,
+      y = AKI_primary,
+      color = factor(AKI_primary)
+    ),
+    width = 0,
+    height = 0.035,
+    alpha = 0.35,
+    size = 1.7
+  ) +
+
+  geom_line(
+    data = fitted_curve,
+    aes(
+      x = Protein,
+      y = Probability
+    ),
+    color = "#111827",
+    linewidth = 1.2
+  ) +
+
+  scale_color_manual(
+    values = c(
+      "0" = blue,
+      "1" = red
+    ),
+    labels = c(
+      "No AKI",
+      "AKI"
+    ),
+    name = "Observed outcome"
+  ) +
+
+  scale_y_continuous(
+    breaks = seq(0, 1, 0.2),
+    labels = scales::percent
+  ) +
+
+  coord_cartesian(
+    ylim = c(-0.05, 1.05)
+  ) +
+
+  labs(
+    title = "Observed AKI and Adjusted Model Predictions",
+    subtitle = "Individual observations and standardized fitted probability",
+    x = "Artificial protein intake (g/kg/day)",
+    y = "AKI outcome / predicted probability"
+  ) +
+
+  theme_report() +
+  theme(legend.position = "bottom")
+
+print(p_observed_fitted)
+```
+
+The fitted curve is not an observed risk curve or a causal dose-response estimate. Predictions at protein doses with poor covariate overlap require particular caution.
+
+# 8. Model Diagnostics
+
+The following diagnostics examine residual behavior, predictive calibration, leverage and influential observations.
+
+Because AKI is binary, logistic regression does not require normally distributed residuals.
+
+## 8.1 Four Diagnostic Plots
+
+```{r four-diagnostic-plots, fig.width=12, fig.height=9}
+diagnostic_data <- tibble::tibble(
+  Observation = seq_len(nrow(model_data)),
+  Observed = model_data$AKI_primary,
+
+  Fitted = fitted(model_adjusted),
+
+  Deviance_residual = residuals(
+    model_adjusted,
+    type = "deviance"
+  ),
+
+  Standardized_residual = rstandard(
+    model_adjusted,
+    type = "deviance"
+  ),
+
+  Leverage = hatvalues(model_adjusted),
+  Cooks_distance = cooks.distance(model_adjusted)
+)
+
+# 1. Deviance residuals versus fitted probabilities
+p_diag1 <- ggplot(
+  diagnostic_data,
+  aes(
+    x = Fitted,
+    y = Deviance_residual
+  )
+) +
+  geom_point(
+    color = blue,
+    alpha = 0.5,
+    size = 1.6
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = grey
+  ) +
+  labs(
+    title = "1. Residuals vs Fitted",
+    x = "Fitted AKI probability",
+    y = "Deviance residual"
+  ) +
+  theme_report()
+
+# 2. Observed versus predicted AKI
+n_bins <- min(
+  10L,
+  nrow(diagnostic_data),
+  length(unique(diagnostic_data$Fitted))
+)
+
+binned_data <- diagnostic_data %>%
+  mutate(
+    Bin = dplyr::ntile(Fitted, n_bins)
+  ) %>%
+  group_by(Bin) %>%
+  summarise(
+    Mean_predicted = mean(Fitted),
+    Observed_AKI = mean(Observed),
+    Patients = n(),
+    .groups = "drop"
+  )
+
+p_diag2 <- ggplot(
+  binned_data,
+  aes(
+    x = Mean_predicted,
+    y = Observed_AKI
+  )
+) +
+  geom_abline(
+    intercept = 0,
+    slope = 1,
+    linetype = "dashed",
+    color = grey
+  ) +
+  geom_point(
+    aes(size = Patients),
+    color = blue
+  ) +
+  coord_equal(
+    xlim = c(0, 1),
+    ylim = c(0, 1)
+  ) +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "2. Observed vs Predicted AKI",
+    x = "Mean predicted AKI probability",
+    y = "Observed AKI proportion",
+    size = "Patients"
+  ) +
+  theme_report()
+
+# 3. Residuals versus leverage
+p_diag3 <- ggplot(
+  diagnostic_data,
+  aes(
+    x = Leverage,
+    y = Standardized_residual
+  )
+) +
+  geom_point(
+    aes(size = Cooks_distance),
+    color = blue,
+    alpha = 0.55
+  ) +
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    color = grey
+  ) +
+  labs(
+    title = "3. Residuals vs Leverage",
+    x = "Leverage",
+    y = "Standardized deviance residual",
+    size = "Cook's D"
+  ) +
+  theme_report()
+
+# 4. Cook's distance
+p_diag4 <- ggplot(
+  diagnostic_data,
+  aes(
+    x = Observation,
+    y = Cooks_distance
+  )
+) +
+  geom_segment(
+    aes(
+      xend = Observation,
+      yend = 0
+    ),
+    color = blue,
+    alpha = 0.7
+  ) +
+  geom_hline(
+    yintercept = 4 / nrow(model_data),
+    linetype = "dashed",
+    color = red
+  ) +
+  labs(
+    title = "4. Cook's Distance",
+    subtitle = "Dashed line: 4/n screening heuristic",
+    x = "Observation index",
+    y = "Cook's distance"
+  ) +
+  theme_report()
+
+p_diagnostics <- patchwork::wrap_plots(
+  p_diag1,
+  p_diag2,
+  p_diag3,
+  p_diag4,
+  ncol = 2
+) +
+  patchwork::plot_annotation(
+    title = "Core Adjusted Logistic Regression Diagnostics"
+  )
+
+print(p_diagnostics)
+```
+
+## 8.2 Diagnostic Summary
+
+```{r diagnostic-summary}
+diagnostic_summary <- diagnostic_data %>%
+  summarise(
+    Patients = n(),
+    Maximum_Cooks_D = max(Cooks_distance),
+    Above_4_over_n = sum(
+      Cooks_distance > 4 / nrow(model_data)
+    ),
+    Maximum_leverage = max(Leverage)
+  )
+
+knitr::kable(
+  diagnostic_summary %>%
+    mutate(
+      Maximum_Cooks_D = round(Maximum_Cooks_D, 4),
+      Maximum_leverage = round(Maximum_leverage, 4)
+    ),
+  caption = "Influence diagnostic summary"
+)
+```
+
+Observations with high influence require investigation, not automatic removal. The plots do not establish the absence of confounding or validate every model assumption.
+
+## 8.3 Exploratory Nonlinearity Assessment
+
+A logistic regression assumes linearity of continuous predictors on the log-odds scale.
+
+We investigate whether a more flexible protein relationship is supported by the data. This comparison is exploratory.
+
+```{r nonlinearity-check}
+sufficient_information <- (
+  sum(model_data$AKI_primary == 1) >= 40 &&
+  sum(model_data$AKI_primary == 0) >= 40 &&
+  length(unique(model_data$Protein_01)) >= 5
+)
+
+if (sufficient_information) {
+
+  model_spline <- glm(
+    AKI_primary ~
+      splines::ns(Protein_01, df = 3) +
+      EuroScore2 +
+      CPB_30,
+    data = model_data,
+    family = binomial()
+  )
+
+  knitr::kable(
+    as.data.frame(
+      anova(
+        model_adjusted,
+        model_spline,
+        test = "Chisq"
+      )
+    ),
+    digits = 3,
+    caption = "Exploratory comparison of linear and spline protein effects"
+  )
+
+} else {
+
+  cat(
+    "The exploratory spline analysis was not fitted ",
+    "because event counts or exposure variation ",
+    "were limited."
+  )
+}
+```
+
+The threshold is a pragmatic condition for attempting an exploratory fit, not a guarantee of model adequacy. EuroSCORE II and CPB duration may also require functional-form checks.
+
+# 9. Additional Covariate Analyses
+
+## 9.1 BMI Adjustment
+
+The following comparison evaluates whether including BMI changes the estimated protein association.
+
+Both models use the same BMI-complete sample.
+
+```{r bmi-adjustment}
+bmi_data <- regression_data %>%
+  filter(
+    !is.na(AKI_primary),
+    !is.na(Protein_01),
+    !is.na(EuroScore2),
+    !is.na(CPB_30),
+    !is.na(BMI)
+  )
+
+if (
+  n_distinct(bmi_data$AKI_primary) == 2 &&
+  n_distinct(bmi_data$BMI) > 1
+) {
+
+  model_core_bmi <- glm(
+    formula_core,
+    data = bmi_data,
+    family = binomial()
+  )
+
+  model_bmi <- glm(
+    AKI_primary ~
+      Protein_01 +
+      EuroScore2 +
+      CPB_30 +
+      BMI,
+    data = bmi_data,
+    family = binomial()
+  )
+
+  bmi_results <- bind_rows(
+    extract_protein(
+      model_core_bmi,
+      "Core model"
+    ),
+    extract_protein(
+      model_bmi,
+      "Core model + BMI"
+    )
+  )
+
+  show_or_table(
+    bmi_results,
+    "Sensitivity to BMI adjustment"
+  )
+
+  cat(
+    "\n\nSample:",
+    nrow(bmi_data),
+    "patients;",
+    sum(bmi_data$AKI_primary == 1),
+    "AKI events."
+  )
+
+} else {
+
+  cat("Insufficient data for BMI model comparison.")
+}
+```
+
+## 9.2 Exploratory Oral-Feeding Adjustment
+
+Oral feeding was measured concurrently with artificial protein intake. It may reflect evolving illness and recovery rather than a conventional pre-exposure confounder.
+
+Consequently, this model is exploratory and does not necessarily provide a less biased estimate.
+
+```{r oral-adjustment}
+oral_data <- regression_data %>%
+  filter(
+    !is.na(AKI_primary),
+    !is.na(Protein_01),
+    !is.na(EuroScore2),
+    !is.na(CPB_30),
+    !is.na(Oral_days),
+    Oral_days %in% 0:4
+  ) %>%
+  mutate(
+    Oral_days = factor(
+      Oral_days,
+      levels = 0:4
+    ),
+
+    Protein_group = factor(
+      if_else(
+        Protein == 0,
+        "Zero",
+        "Positive"
+      ),
+      levels = c("Zero", "Positive")
+    )
+  )
+
+oral_overlap <- oral_data %>%
+  count(
+    Oral_days,
+    Protein_group,
+    name = "Patients"
+  ) %>%
+  tidyr::complete(
+    Oral_days,
+    Protein_group,
+    fill = list(Patients = 0)
+  )
+
+knitr::kable(
+  oral_overlap,
+  caption = "Exposure overlap by oral-feeding days"
+)
+
+if (
+  n_distinct(oral_data$AKI_primary) == 2 &&
+  n_distinct(oral_data$Oral_days) > 1 &&
+  n_distinct(oral_data$Protein_01) > 1
+) {
+
+  model_core_oral <- glm(
+    formula_core,
+    data = oral_data,
+    family = binomial()
+  )
+
+  model_oral <- glm(
+    AKI_primary ~
+      Protein_01 +
+      EuroScore2 +
+      CPB_30 +
+      Oral_days,
+    data = oral_data,
+    family = binomial()
+  )
+
+  oral_results <- bind_rows(
+    extract_protein(
+      model_core_oral,
+      "Core model"
+    ),
+    extract_protein(
+      model_oral,
+      "Core model + oral feeding"
+    )
+  )
+
+  show_or_table(
+    oral_results,
+    "Exploratory oral-feeding adjustment"
+  )
+
+} else {
+
+  cat("Insufficient variation for oral-feeding model.")
+}
+```
+
+# 10. Secondary and Worst-Case Outcome Analyses
+
+## 10.1 Outcome Validation
+
+Before comparing outcomes, we verify consistency between the secondary indicator and primary AKI.
+
+```{r outcome-validation}
+nesting_errors <- regression_data %>%
+  filter(
+    AKI_day56 == 1,
+    AKI_primary == 0
+  ) %>%
+  nrow()
+
+outcome_validation <- tibble::tibble(
+  Check = "Day 5-6 AKI without primary AKI",
+  Patients = nesting_errors
+)
+
+knitr::kable(
+  outcome_validation,
+  caption = "AKI outcome consistency"
+)
+```
+
+The after-day-6 exploratory outcome is not modeled here because its validity depends on confirming that the day 5–6 indicator represents the first occurrence of new AKI.
+
+## 10.2 Worst-Case Classification Check
+
+```{r worst-case-validation}
+reclassification_table <- regression_data %>%
+  filter(
+    !is.na(AKI_primary),
+    !is.na(AKI_worst)
+  ) %>%
+  count(
+    AKI_primary,
+    AKI_worst,
+    name = "Patients"
+  )
+
+knitr::kable(
+  reclassification_table,
+  caption = "Primary versus worst-case AKI classification"
+)
+
+death_check <- regression_data %>%
+  filter(
+    AKI_primary == 0,
+    AKI_worst == 1
+  ) %>%
+  count(
+    ICU_death,
+    name = "Patients"
+  ) %>%
+  mutate(
+    Death_status = case_when(
+      ICU_death == 1 ~ "Died in ICU",
+      ICU_death == 0 ~ "Survived ICU",
+      TRUE ~ "Unknown"
+    )
+  ) %>%
+  select(Death_status, Patients)
+
+knitr::kable(
+  death_check,
+  caption = "ICU death among reclassified patients"
+)
+```
+
+The worst-case indicator comes directly from the supplied dataset. Patients reclassified as AKI cases are not necessarily patients with documented kidney injury.
+
+## 10.3 Adjusted Models Across Outcomes
+
+The three outcome models use a common complete-case sample for comparability.
+
+```{r outcome-models}
+common_data <- regression_data %>%
+  filter(
+    !is.na(AKI_primary),
+    !is.na(AKI_day56),
+    !is.na(AKI_worst),
+    !is.na(Protein_01),
+    !is.na(EuroScore2),
+    !is.na(CPB_30)
+  )
+
+if (
+  n_distinct(common_data$AKI_primary) < 2 ||
+  n_distinct(common_data$AKI_day56) < 2 ||
+  n_distinct(common_data$AKI_worst) < 2
+) {
+  stop(
+    "One of the AKI outcomes has insufficient ",
+    "variation in the common sample."
+  )
+}
+
+model_primary_common <- glm(
+  AKI_primary ~
+    Protein_01 + EuroScore2 + CPB_30,
+  data = common_data,
+  family = binomial()
+)
+
+model_secondary_common <- glm(
+  AKI_day56 ~
+    Protein_01 + EuroScore2 + CPB_30,
+  data = common_data,
+  family = binomial()
+)
+
+model_worst_common <- glm(
+  AKI_worst ~
+    Protein_01 + EuroScore2 + CPB_30,
+  data = common_data,
+  family = binomial()
+)
+
+check_model(
+  model_primary_common,
+  "Primary outcome"
+)
+
+check_model(
+  model_secondary_common,
+  "Secondary outcome"
+)
+
+check_model(
+  model_worst_common,
+  "Worst-case outcome"
+)
+
+outcome_comparison <- bind_rows(
+  extract_protein(
+    model_primary_common,
+    "Primary: AKI after day 4"
+  ),
+  extract_protein(
+    model_secondary_common,
+    "Secondary: AKI days 5-6"
+  ),
+  extract_protein(
+    model_worst_common,
+    "Worst-case AKI"
+  )
+) %>%
+  mutate(
+    Patients = nrow(common_data),
+
+    AKI_events = c(
+      sum(common_data$AKI_primary == 1),
+      sum(common_data$AKI_day56 == 1),
+      sum(common_data$AKI_worst == 1)
+    )
+  )
+
+show_or_table(
+  outcome_comparison,
+  "Adjusted protein association across AKI outcomes"
+)
+```
+
+## 10.4 Outcome Comparison Forest Plot
+
+```{r outcome-forest, fig.width=9, fig.height=4.5}
+p_outcome_forest <- ggplot(
+  outcome_comparison,
+  aes(
+    x = OR,
+    y = Model
+  )
+) +
+  geom_vline(
+    xintercept = 1,
+    linetype = "dashed",
+    color = grey
+  ) +
+  geom_segment(
+    aes(
+      x = CI_lower,
+      xend = CI_upper,
+      yend = Model
+    ),
+    color = blue,
+    linewidth = 0.9
+  ) +
+  geom_point(
+    color = blue,
+    size = 3
+  ) +
+  scale_x_log10() +
+  labs(
+    title = "Adjusted Protein Association Across AKI Outcomes",
+    subtitle = "Common sample; OR per 0.1 g/kg/day",
+    x = "Adjusted odds ratio (log scale)",
+    y = NULL
+  ) +
+  theme_report()
+
+print(p_outcome_forest)
+```
+
+These models examine associations under different endpoint definitions. Their coefficients should not be interpreted as direct estimates of the causal effect of artificial protein intake.
+
+# 11. Discussion and Limitations
+
+## Interpretation Framework
+
+The analysis should address:
+
+1. The magnitude, direction and uncertainty of the primary protein association.
+2. Differences between unadjusted and adjusted models.
+3. Cross-validated and held-out predictive performance.
+4. Whether the model specification is supported by diagnostic results.
+5. The sensitivity of the association to BMI, oral feeding, and AKI definitions.
+
+## Important Limitations
+
+**Confounding by indication:** Artificial protein was prescribed according to clinical judgment rather than randomized.
+
+**Residual confounding:** EuroSCORE II and CPB duration do not fully capture postoperative ICU severity.
+
+**Selection bias:** The cohort consists of patients with prolonged ICU stays, potentially selected according to severity and complications.
+
+**Limited exposure overlap:** Patients with four exclusively oral-feeding days received no artificially administered protein.
+
+**Competing events:** ICU death can prevent subsequent AKI from being observed. Worst-case classification examines one assumption but does not resolve the competing-risk problem.
+
+**Internal validation:** Cross-validation and a test split describe predictive performance. Neither removes confounding nor validates causal interpretations.
+
+**Sample size:** The precision of all models depends on the numbers of events and non-events, especially within training, validation, and test subsets.
+
+## Conclusion
+
+The primary adjusted regression estimates the association between artificial protein intake and subsequent AKI, conditional on EuroSCORE II and CPB duration.
+
+Cross-validation and held-out testing provide additional information about predictive performance. The final association models use all complete cases to avoid unnecessarily sacrificing statistical precision.
+
+Interpretation should prioritize effect sizes, confidence intervals, model adequacy, clinical plausibility and the limitations of the observational design.
+
+# References
+
+1. Stoppe C, et al. (2023). *Effect of High-Dose Selenium on Postoperative Organ Dysfunction and Mortality in Cardiac Surgery Patients.* JAMA Surgery. https://doi.org/10.1001/jamasurg.2022.6855
+
+2. Project proposal (2026). *Acute kidney injury after major cardiac surgery: the association with protein intake in the acute phase.*
+
+3. Project partner's written responses on eligibility, artificial nutrition and mortality sensitivity analysis.
+
+4. Steyerberg EW, Harrell FE. (2016). *Prediction models need appropriate internal, internal-external, and external validation.* Journal of Clinical Epidemiology.
+
+5. Steyerberg EW. (2018). *Validation in prediction research: the waste by data splitting.* Journal of Clinical Epidemiology. https://pubmed.ncbi.nlm.nih.gov/30063954/
+
+6. Riley RD, et al. (2019). *Minimum sample size for developing a multivariable prediction model: Part II—binary and time-to-event outcomes.* Statistics in Medicine. https://doi.org/10.1002/sim.7992
+
+7. Hernán MA, Robins JM. *Causal Inference: What If.* https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/
+
+---
+
+*All clinical data are processed locally. AI-generated code and interpretations require critical review and documentation according to course requirements.*

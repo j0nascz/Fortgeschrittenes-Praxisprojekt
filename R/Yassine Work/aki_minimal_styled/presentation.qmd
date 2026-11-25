@@ -1,0 +1,215 @@
+---
+pagetitle: "Protein Intake and AKI — Intermediate Presentation"
+lang: en
+format:
+  revealjs:
+    theme: simple
+    css: slides.css
+    slide-level: 2
+    slide-number: c/t
+    navigation-mode: linear
+    transition: none
+    background-transition: none
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.065
+    controls: true
+    progress: true
+    incremental: false
+    loop: false
+    hash: false
+    history: false
+    scroll-view: false
+    footer: "LMU Munich · Statistics and Data Science"
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+## Protein Intake and Acute Kidney Injury {.cover}
+
+```{r}
+#| include: false
+source("R/figure_paths.R", local = TRUE)
+```
+
+**After Major Cardiac Surgery**
+
+An observational post-hoc analysis of the SUSTAIN CSX trial
+
+**Fortgeschrittenes Praxisprojekt · LMU Munich**
+
+4 December 2026
+
+<small>Aymen Feki · Ilyes Lihidheb · Jonas · Tom Baumann · Yassine Ben Ahmed</small>
+
+<small>Project partner: Wolfgang Hartl</small>
+
+## Research question
+
+::: {.question}
+Is **artificial protein intake during ICU days 1–4** associated with **new acute kidney injury (AKI) after day 4**?
+:::
+
+- AKI is a major complication after cardiac surgery.
+- Optimal protein administration during critical illness remains debated.
+- We analyze a selected subgroup of the SUSTAIN CSX trial.
+
+**Study design:** observational post-hoc protein analysis; intake was not randomized.
+
+## Exposure and outcomes
+
+::: {.columns}
+::: {.column width="48%"}
+**PROTEIN EXPOSURE**
+
+- Average artificial intake, days 1–4
+- Artificial intake on day 4
+- g/kg body weight/day
+:::
+::: {.column width="52%"}
+**AKI OUTCOMES**
+
+- **Primary:** new AKI after day 4 until ICU discharge or death
+- **Secondary:** new AKI on days 5–6
+- Both outcomes are binary
+:::
+:::
+
+::: {.timeline}
+**Days 1–4** · Protein exposure　 →　 **Day 5 onward** · AKI observation
+:::
+
+## Potential confounding
+
+```{r}
+#| out-width: "84%"
+#| fig-align: center
+knitr::include_graphics(plot_path("dag"))
+```
+
+<small>Adjustment candidates: EuroSCORE II, BMI, CPB duration and minimum intraoperative SBP. Postoperative severity may remain unmeasured.</small>
+
+## Study population
+
+```{r}
+#| out-width: "88%"
+#| fig-align: center
+knitr::include_graphics(plot_path("flow"))
+```
+
+<small>Check eligibility, missing values, AKI events and deaths. A recorded zero protein intake is not a missing value.</small>
+
+## Distribution of protein intake
+
+```{r}
+#| out-width: "88%"
+#| fig-align: center
+knitr::include_graphics(plot_path("density"))
+```
+
+<small>Interpret low intake in the context of clinician-directed, supplementary artificial feeding.</small>
+
+## Statistical approach
+
+::: {.columns}
+::: {.column width="47%"}
+**LOGISTIC REGRESSION**
+
+- Two exposure definitions
+- Two AKI outcome windows
+- Crude and adjusted models
+- Odds ratios with 95% CIs
+:::
+::: {.column width="53%"}
+**ADJUSTMENT CANDIDATES**
+
+- EuroSCORE II and BMI
+- Cardiopulmonary bypass duration
+- Minimum intraoperative SBP
+- Oral feeding assessed separately
+:::
+:::
+
+::: {.formula}
+$\operatorname{logit}[P(\mathrm{AKI}=1)] = \beta_0 + \beta_1\,\mathrm{Protein} + \boldsymbol{\gamma}^{\mathsf T}\mathbf X$
+:::
+
+## Main model results
+
+```{r}
+#| out-width: "94%"
+#| fig-align: center
+knitr::include_graphics(plot_path("forest"))
+```
+
+<small>Compare effect size, precision and changes after adjustment. Reference: OR = 1.</small>
+
+## Exploratory subgroup analyses
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("subgroup"))
+```
+
+<small>Subgroup comparisons are exploratory. Different p-values alone do not demonstrate interaction.</small>
+
+## Sensitivity analyses
+
+::: {.columns}
+::: {.column width="50%"}
+**ORAL FEEDING**
+
+May reflect nutritional strategy and clinical recovery. Test its impact on estimates.
+:::
+::: {.column width="50%"}
+**DEATH BEFORE AKI**
+
+Worst-case analysis recodes ICU deaths without AKI as events; it is not a competing-risks model.
+:::
+:::
+
+```{r}
+#| out-width: "78%"
+#| fig-align: center
+knitr::include_graphics(plot_path("sensitivity"))
+```
+
+## Interpretation and limitations {.interpretation-slide}
+
+**WHAT THE ANALYSIS CAN SHOW**
+
+- Protein–AKI associations and their uncertainty
+- Consistency across definitions and models
+- Sensitivity to assumptions
+
+**KEY LIMITATIONS**
+
+- Nonrandomized protein intake and residual confounding
+- Selection of patients with ICU stay ≥ 4 days
+- Death as a competing event
+
+::: {.keyline}
+**Association does not establish causation.**
+:::
+
+## Discussion {.discussion}
+
+**01　Competing events**
+
+Is worst-case recoding sufficient, or can event timing support a competing-risk analysis?
+
+**02　Oral feeding**
+
+Should it be handled as a covariate or in sensitivity analyses?
+
+**03　Residual confounding**
+
+Do our variables adequately reflect postoperative clinical severity?
+
+::: {.keyline}
+**Feedback:** Are our model assumptions and sensitivity strategy defensible?
+:::

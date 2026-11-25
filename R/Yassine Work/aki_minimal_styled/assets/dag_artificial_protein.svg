@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="430" viewBox="0 0 1100 430">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#41617c"/></marker>
+  <style>.node{fill:#eaf2f6;stroke:#477388;stroke-width:2}.main{fill:#c9e7ea;stroke:#116b80;stroke-width:3}.t{font:18px Arial,sans-serif;fill:#16253e}.small{font:15px Arial,sans-serif;fill:#52627a}.edge{stroke:#41617c;stroke-width:2.8;fill:none;marker-end:url(#arrow)}.dash{stroke-dasharray:9 6}</style>
+</defs>
+<rect x="12" y="10" width="1076" height="410" rx="18" fill="#fff"/>
+<rect class="node" x="40" y="64" width="240" height="82" rx="14"/><text class="t" x="160" y="98" text-anchor="middle">Preoperative risk</text><text class="small" x="160" y="122" text-anchor="middle">EuroSCORE II, BMI</text>
+<rect class="node" x="40" y="245" width="240" height="89" rx="14"/><text class="t" x="160" y="279" text-anchor="middle">Intraoperative factors</text><text class="small" x="160" y="304" text-anchor="middle">CPB duration, min. SBP</text>
+<rect class="node" x="380" y="52" width="302" height="90" rx="14" stroke-dasharray="8 5"/><text class="t" x="531" y="87" text-anchor="middle">Postoperative severity</text><text class="small" x="531" y="114" text-anchor="middle">Not directly measured</text>
+<rect class="main" x="385" y="239" width="285" height="94" rx="14"/><text class="t" x="528" y="276" text-anchor="middle">Artificial protein intake</text><text class="small" x="528" y="303" text-anchor="middle">ICU days 1–4</text>
+<rect class="main" x="829" y="237" width="235" height="95" rx="14"/><text class="t" x="947" y="274" text-anchor="middle">New AKI</text><text class="small" x="947" y="302" text-anchor="middle">After ICU day 4</text>
+<rect class="node" x="731" y="65" width="333" height="81" rx="14"/><text class="t" x="898" y="99" text-anchor="middle">Oral feeding, days 1–4</text><text class="small" x="898" y="124" text-anchor="middle">Exposure-period variable</text>
+<path class="edge" d="M280 104 L379 91"/><path class="edge" d="M280 125 Q324 188 420 238"/><path class="edge" d="M280 289 L383 289"/><path class="edge" d="M280 305 Q700 405 829 320"/>
+<path class="edge" d="M531 142 L531 237"/><path class="edge" d="M682 106 Q791 125 870 237"/><path class="edge" d="M681 87 L729 99"/>
+<path class="edge" d="M671 285 L826 285"/><path class="edge dash" d="M898 146 Q829 184 669 257"/>
+<text x="40" y="391" class="small">Working causal assumptions only. Arrow directions and adjustment set require clinical review.</text>
+</svg>

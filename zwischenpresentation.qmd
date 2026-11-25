@@ -20,7 +20,6 @@ confounders: explain...
 
 ### DAG
 
-
 ## 2. EXPLORATORY
 
 ### missing values
@@ -31,13 +30,11 @@ confounders: explain...
 
 table: deaths vs aki
 
-
-
 ## 3. METHODS
 
 ### models
 
-logistic regression 
+logistic regression
 
 (plot logistic regression model + scatter plot)
 
@@ -47,18 +44,8 @@ multinomial model?
 
 ### models
 
-forrest plot:
-  crude
-    primary: average
-    primary: day 4
-    secondary: average
-    secondary: day 4
-  adjusted
-    primary: average
-    primary: day 4
-    secondary: average
-    secondary: day 4
-  
+forrest plot: crude primary: average primary: day 4 secondary: average secondary: day 4 adjusted primary: average primary: day 4 secondary: average secondary: day 4
+
 ## 3. METHODS
 
 ### sensitivity analysis
@@ -74,7 +61,6 @@ forrest plot for one outcome, with sensitivity analysis
 ### role of oral feeding
 
 results regarding our research question (primary + second outcome)
-    
 
 ## 4. discussion:
 
@@ -85,5 +71,3 @@ competing risks death (sensitivity analysis)
 is the oral protein intake relevant
 
 clinical condition is not measurable so we use confounders to explain it
-
-
