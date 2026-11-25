@@ -34,7 +34,7 @@ summary(model_adjusted)
 
 # Unadjusted Model
 
-ggplot(data, aes(x = Protein_intake__d1_4, y = AKI_any)) +
+plot_unadjusted <- ggplot(data, aes(x = Protein_intake__d1_4, y = AKI_any)) +
   geom_jitter(
     width = 0,
     height = 0.04,
@@ -95,7 +95,7 @@ prediction_data$lower <- plogis(pred$fit - 1.96 * pred$se.fit)
 prediction_data$upper <- plogis(pred$fit + 1.96 * pred$se.fit)
 
 # Plot
-ggplot() +
+plot_adjusted <- ggplot() +
   geom_jitter(
     data = data,
     aes(x = Protein_intake__d1_4, y = AKI_any),
@@ -132,8 +132,8 @@ ggplot() +
   ) +
   theme_minimal()
 
+ggsave("logistic_regression_unadjusted.png", plot = plot_unadjusted,  width = 8, height = 5, dpi = 300)
 
-
-
+ggsave("logistic_regression_adjusted.png", plot = plot_adjusted,  width = 8, height = 5, dpi = 300)
 
 
