@@ -159,11 +159,13 @@ table: deaths vs aki
 
 ### models
 
-logistic regression
+### Logistic Regression Unadjusted
 
-(plot logistic regression model + scatter plot)
+![](figures/311_logistic_regression_unadjusted.png)
 
-multinomial model?
+### Logistic Regression Adjusted
+
+![](figures/312_logistic_regression_adjusted.png)
 
 ## 3. METHODS
 

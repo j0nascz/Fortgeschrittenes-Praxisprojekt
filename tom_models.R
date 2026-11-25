@@ -132,8 +132,8 @@ plot_adjusted <- ggplot() +
   ) +
   theme_minimal()
 
-ggsave("logistic_regression_unadjusted.png", plot = plot_unadjusted,  width = 8, height = 5, dpi = 300)
+ggsave("figures/311_logistic_regression_unadjusted.png", plot = plot_unadjusted,  width = 8, height = 5, dpi = 300)
 
-ggsave("logistic_regression_adjusted.png", plot = plot_adjusted,  width = 8, height = 5, dpi = 300)
+ggsave("figures/312_logistic_regression_adjusted.png", plot = plot_adjusted,  width = 8, height = 5, dpi = 300)
 
 
