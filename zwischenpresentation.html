@@ -138,18 +138,79 @@
 </div>
 
 </section>
-<section id="introduction" class="slide level2">
-<h2>1. Introduction</h2>
-<h3 id="research-question">Research question</h3>
-<p>research question</p>
-<p>outcome: explain outcome variables</p>
-<p>exposure: explain…</p>
-<p>confounders: explain…</p>
+<section class="slide level2">
+
+<h3 id="introduction">1. Introduction</h3>
 </section>
-<section id="introduction-1" class="slide level2">
-<h2>1. Introduction</h2>
-<h3 id="dag">DAG</h3>
+<section id="protein-intake-and-acute-kidney-injury-after-cardiac-surgery" class="slide level2 smaller">
+<h2>Protein Intake and Acute Kidney Injury After Cardiac Surgery</h2>
+<p><strong>Clinical background</strong></p>
+<ul>
+<li>Acute kidney injury (AKI) is an important complication following major cardiac surgery.</li>
+<li>Protein administration is essential in nutritional therapy for critically ill patients.</li>
+<li>Optimal protein intake during the acute phase remains controversial.</li>
+</ul>
+<p><strong>Potential effects of protein intake</strong></p>
+<div class="columns">
+<div class="column" style="width:50%;">
+<p><strong>Potential harm</strong></p>
+<p>Higher protein intake may worsen outcomes in patients with impaired kidney function.</p>
+</div><div class="column" style="width:50%;">
+<p><strong>Potential benefit</strong></p>
+<p>Amino acid administration may have kidney-protective effects in certain patients.</p>
+</div></div>
+<p><small>Source: Acute Kidney Injury Project Proposal (2026)</small></p>
 </section>
+<section id="data-source-the-sustain-csx-trial" class="slide level2 smaller">
+<h2>Data Source: The SUSTAIN CSX Trial</h2>
+<p><strong>Original study</strong></p>
+<ul>
+<li>Multicenter, randomized, double-blind, placebo-controlled trial</li>
+<li>Investigated high-dose selenium supplementation in cardiac surgery patients</li>
+<li>Conducted from 2015 to 2021 at 23 centers in Germany and Canada</li>
+<li><strong>1,416 patients randomized</strong></li>
+</ul>
+<p><strong>Our project: Post hoc analysis</strong></p>
+<ul>
+<li>Subgroup with ICU stay ≥ 4 days</li>
+<li>No kidney failure before surgery</li>
+<li>Focus on protein intake and subsequent AKI</li>
+</ul>
+<p><small>Sources: Stoppe et al.&nbsp;(2023); AKI Project Proposal (2026)</small></p>
+</section>
+<section id="research-question" class="slide level2 smaller">
+<h2>Research Question</h2>
+<p><strong>Is supplemental protein intake during the first four ICU days associated with the subsequent development of acute kidney injury (AKI)?</strong></p>
+<p><strong>Exposure</strong></p>
+<ul>
+<li>Supplemental protein intake during ICU days 1–4</li>
+</ul>
+<p><strong>Primary outcome</strong></p>
+<ul>
+<li>New AKI after day 4 until ICU discharge or in-ICU death</li>
+</ul>
+<p><strong>Secondary outcome</strong></p>
+<ul>
+<li>New AKI on ICU days 5 or 6</li>
+</ul>
+</section>
+<section id="potential-confounders" class="slide level2 smaller">
+<h2>Potential Confounders</h2>
+<p>Protein intake was not randomized. Several factors may influence both protein administration and AKI risk.</p>
+<ul>
+<li><strong>EuroSCORE II:</strong> Preoperative operative risk</li>
+<li><strong>BMI:</strong> Body size and nutritional requirements</li>
+<li><strong>Cardiopulmonary Bypass Duration (CPB Duration):</strong> Surgical complexity and physiological stress</li>
+<li><strong>SBP:</strong> Blood pressure and circulatory stability</li>
+<li><strong>Exclusive oral feeding:</strong> Potential proxy for recovery and illness severity</li>
+<li><strong>Illness severity:</strong> Underlying patient condition (not directly measured)</li>
+</ul>
+<p><strong>Goal:</strong> Identify possible confounding pathways and guide statistical adjustment.</p>
+</section>
+<section id="dag" class="slide level2">
+<h2>DAG</h2>
+
+<img data-src="zwischenpresentation_files/figure-revealjs/unnamed-chunk-1-1.png" style="width:100.0%" class="r-stretch"></section>
 <section id="exploratory" class="slide level2">
 <h2>2. EXPLORATORY</h2>
 <h3 id="missing-values">missing values</h3>
@@ -177,8 +238,9 @@
 <p>forrest plot for one outcome, with sensitivity analysis</p>
 </section>
 <section id="discussion" class="slide level2">
-<h2>4. discussion:</h2>
-<h3 id="role-of-oral-feeding">role of oral feeding</h3>
+<h2>4. Discussion:</h2>
+<h3 id="role-of-oral-feeding">Role of oral feeding</h3>
+<p>The days on exclusive oral feeding (days 1–4) are a marker of clinical condition: patients who are able to eat normally early on are more stable, do not require artificial nutrition and therefore receive hardly any artificial protein. This section shows (1) that oral feeding is associated with the patient’s state of health, and (2) how strongly it affects the results for protein intake</p>
 </section>
 <section id="discussion-1" class="slide level2">
 <h2>4. discussion:</h2>
@@ -408,6 +470,44 @@
         ]
       });
     </script>
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
     <script id="quarto-html-after-body" type="application/javascript">
       window.document.addEventListener("DOMContentLoaded", function (event) {
         const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
