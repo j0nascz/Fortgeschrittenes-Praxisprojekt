@@ -157,15 +157,53 @@ table: deaths vs aki
 
 ## 3. METHODS
 
-### models
-
-### Logistic Regression Unadjusted
+## Logistic Regression Unadjusted
 
 ![](figures/311_logistic_regression_unadjusted.png)
 
-### Logistic Regression Adjusted
+## Logistic Regression Adjusted
 
 ![](figures/312_logistic_regression_adjusted.png)
+
+## Interpretation of $\beta$
+
+**Odds bei Proteinaufnahme (X):**
+
+$$
+Odds(AKI=1\mid X)
+=
+\frac{P(AKI=1\mid X)}
+{1-P(AKI=1\mid X)}
+$$
+
+**Odds bei Proteinaufnahme (X+1):**
+
+$$
+Odds(AKI=1\mid X+1)
+=
+\frac{P(AKI=1\mid X+1)}
+{1-P(AKI=1\mid X+1)}
+$$
+
+Das Verhältnis dieser beiden Odds ist:
+
+$$
+\boxed{
+\frac{Odds(AKI=1\mid X+1)}
+{Odds(AKI=1\mid X)}
+=e^{\beta_1}
+}
+$$
+
+Bei (\beta\_1=1{,}3):
+
+$$
+\boxed{
+\frac{Odds(AKI=1\mid X+1)}
+{Odds(AKI=1\mid X)}
+=e^{1{,}3}\approx 3{,}67
+}
+$$
 
 ## 3. METHODS
 
