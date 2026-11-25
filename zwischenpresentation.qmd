@@ -80,70 +80,7 @@ Protein intake was not randomized. Several factors may influence both protein ad
 
 ## DAG
 
-```{r}
-#| echo: false
-#| warning: false
-#| message: false
-#| fig-width: 12
-#| fig-height: 7
-#| out-width: "100%"
-
-library(dagitty)
-library(ggdag)
-library(ggplot2)
-
-dag <- dagitty('dag {
-  BMI -> Protein
-  BMI -> AKI
-
-  EuroScore -> Protein
-  EuroScore -> AKI
-
-  CPB -> Protein
-  CPB -> AKI
-
-  SBP -> Protein
-  SBP -> AKI
-
-  Severity -> Protein
-  Severity -> AKI
-  Severity -> OralFeeding
-
-  OralFeeding -> Protein
-
-  Protein -> AKI
-}')
-
-exposures(dag) <- "Protein"
-outcomes(dag) <- "AKI"
-
-coordinates(dag) <- list(
-  x = c(
-    BMI = 0,
-    Severity = 2,
-    EuroScore = 4,
-    OralFeeding = 0,
-    SBP = 2,
-    CPB = 4,
-    Protein = 1.5,
-    AKI = 4
-  ),
-  y = c(
-    BMI = 2,
-    Severity = 3,
-    EuroScore = 2,
-    OralFeeding = 1,
-    SBP = 1.5,
-    CPB = 1,
-    Protein = 0,
-    AKI = 0
-  )
-)
-
-ggdag(dag, text = FALSE, use_labels = "name") +
-  theme_dag() +
-  ggtitle("Proposed DAG: Supplemental Protein Intake and AKI")
-```
+![](figures/dag.png){width=95%}
 
 ## 2. EXPLORATORY
 
@@ -159,13 +96,13 @@ table: deaths vs aki
 
 ### models
 
-### Logistic Regression Unadjusted
+## Logistic Regression Unadjusted {.smaller}
 
-![](figures/311_logistic_regression_unadjusted.png)
+![](figures/311_logistic_regression_unadjusted.png){width=90%}
 
-### Logistic Regression Adjusted
+## Logistic Regression Adjusted {.smaller}
 
-![](figures/312_logistic_regression_adjusted.png)
+![](figures/312_logistic_regression_adjusted.png){width=90%}
 
 ## 3. METHODS
 
