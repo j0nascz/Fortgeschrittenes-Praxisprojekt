@@ -145,7 +145,6 @@ ggdag(dag, text = FALSE, use_labels = "name") +
   ggtitle("Proposed DAG: Supplemental Protein Intake and AKI")
 ```
 
-
 ## 2. EXPLORATORY
 
 ### missing values
@@ -180,7 +179,8 @@ forrest plot for one outcome, with sensitivity analysis
 
 ## 4. Discussion:
 
-### Role of oral feeding 
+### Role of oral feeding
+
 The days on exclusive oral feeding (days 1–4) are a marker of clinical condition: patients who are able to eat normally early on are more stable, do not require artificial nutrition and therefore receive hardly any artificial protein. This section shows (1) that oral feeding is associated with the patient's state of health, and (2) how strongly it affects the results for protein intake
 
 ## 4. discussion:
