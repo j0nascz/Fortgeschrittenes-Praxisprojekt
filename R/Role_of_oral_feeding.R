@@ -5,8 +5,8 @@
 # The days on exclusive oral feeding (days 1-4) are a marker of clinical
 # condition: patients who are able to eat normally early on are more stable,
 # do not require artificial nutrition and therefore receive hardly any
-# artificial protein. This script shows (1) that oral feeding is associated
-# with the patient's state of health, and (2) how strongly it affects the
+# artificial protein. This script shows that oral feeding is associated
+# with the patient's state of health, and how strongly it affects the
 # results for protein intake.
 #
 # Run from the project root (open Fortgeschrittenes-Praxisprojekt.Rproj first).
