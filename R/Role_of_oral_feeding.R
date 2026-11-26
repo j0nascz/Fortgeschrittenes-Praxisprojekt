@@ -51,7 +51,7 @@ analyses <- list(
   list(name = "Primary: new AKI after day 4",      outcome = "AKI_new",           expo = "Protein_intake__d1_4",          firth = FALSE),
   list(name = "Secondary: AKI on day 5 or 6",      outcome = "AKI_on_day_5_or_6", expo = "Protein_intake__d1_4",          firth = TRUE),
   list(name = "Worst case: AKI or death",          outcome = "AKI_worst",         expo = "Protein_intake__d1_4",          firth = FALSE),
-  list(name = "Exposure: protein intake on day 4", outcome = "AKI_new",           expo = "Protein_intake_per_kg_on_day4", firth = FALSE)
+  list(name = "Primary outcome, protein intake on day 4 only", outcome = "AKI_new", expo = "Protein_intake_per_kg_on_day4", firth = FALSE)
 )
 
 strategies <- c("Not adjusted for oral feeding",
