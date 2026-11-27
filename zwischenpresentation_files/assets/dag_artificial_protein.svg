@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="500" viewBox="0 0 1300 500" role="img" aria-label="Working causal DAG for artificial protein intake and AKI after ICU day 4">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#202020"/>
+    </marker>
+    <style>
+      .node { fill:#F3F4F6; stroke:#6B7280; stroke-width:2; }
+      .main { fill:#E5E7EB; stroke:#1F2937; stroke-width:3; }
+      .label { font:18px Arial, sans-serif; fill:#000000; }
+      .detail { font:15px Arial, sans-serif; fill:#000000; }
+      .edge { stroke:#202020; stroke-width:2.6; fill:none; marker-end:url(#arrow); stroke-linecap:round; }
+    </style>
+  </defs>
+  <rect x="12" y="12" width="1276" height="476" rx="18" fill="#fff" />
+
+  <!-- Ten direct straight arrows; overlaps between arrows are intentional. -->
+  <!-- Preoperative risk → postoperative severity / artificial protein -->
+  <path class="edge" d="M315 107 L424 105" />
+  <path class="edge" d="M307 149 L424 284" />
+  <!-- Intraoperative factors → protein / AKI -->
+  <path class="edge" d="M315 351 L424 329" />
+  <path class="edge" d="M290 405 L949 340" />
+  <!-- Postoperative severity → protein / AKI / oral feeding -->
+  <path class="edge" d="M582 151 L582 256" />
+  <path class="edge" d="M730 138 L977 258" />
+  <path class="edge" d="M730 105 L849 105" />
+  <!-- Protein → AKI -->
+  <path class="edge" d="M740 306 L949 306" />
+  <!-- Oral feeding → protein / AKI -->
+  <path class="edge" d="M866 152 L740 284" />
+  <path class="edge" d="M1080 152 L1080 257" />
+
+  <!-- Nodes -->
+  <rect class="node" x="60" y="64" width="255" height="85" rx="14" />
+  <text class="label" x="187.5" y="100" text-anchor="middle">Preoperative risk</text>
+  <text class="detail" x="187.5" y="126" text-anchor="middle">EuroSCORE II, BMI</text>
+
+  <rect class="node" x="60" y="311" width="255" height="94" rx="14" />
+  <text class="label" x="187.5" y="349" text-anchor="middle">Intraoperative factors</text>
+  <text class="detail" x="187.5" y="376" text-anchor="middle">CPB duration, min. SBP</text>
+
+  <rect class="node" x="425" y="59" width="305" height="92" rx="14" stroke-dasharray="8 5" />
+  <text class="label" x="577.5" y="96" text-anchor="middle">Postoperative severity</text>
+  <text class="detail" x="577.5" y="124" text-anchor="middle">Not directly measured</text>
+
+  <rect class="main" x="425" y="257" width="315" height="98" rx="14" />
+  <text class="label" x="582.5" y="297" text-anchor="middle">Artificial protein intake</text>
+  <text class="detail" x="582.5" y="326" text-anchor="middle">ICU days 1–4</text>
+
+  <rect class="node" x="850" y="62" width="355" height="90" rx="14" />
+  <text class="label" x="1027.5" y="100" text-anchor="middle">Oral feeding, days 1–4</text>
+  <text class="detail" x="1027.5" y="128" text-anchor="middle">Exposure-period variable</text>
+
+  <rect class="main" x="950" y="258" width="255" height="97" rx="14" />
+  <text class="label" x="1077.5" y="298" text-anchor="middle">New AKI</text>
+  <text class="detail" x="1077.5" y="327" text-anchor="middle">After ICU day 4</text>
+
+</svg>

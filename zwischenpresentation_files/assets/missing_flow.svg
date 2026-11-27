@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="430" viewBox="0 0 1100 430">
+<rect x="12" y="12" width="1076" height="406" rx="20" fill="#f2f6fa" stroke="#b6c8d7" stroke-width="2"/>
+<text x="550" y="132" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="34" fill="#16253e">Patient selection flowchart</text>
+<text x="550" y="205" text-anchor="middle" font-family="Arial" font-size="28" fill="#9f3939">Figure not yet provided</text>
+<text x="550" y="263" text-anchor="middle" font-family="Arial" font-size="19" fill="#52627a">Save your exported figure to the expected path:</text>
+<text x="550" y="300" text-anchor="middle" font-family="monospace" font-size="20" fill="#16253e">assets/patient_flow.png</text>
+<text x="550" y="367" text-anchor="middle" font-family="Arial" font-size="17" fill="#52627a">No patient results have been simulated or invented.</text>
+</svg>

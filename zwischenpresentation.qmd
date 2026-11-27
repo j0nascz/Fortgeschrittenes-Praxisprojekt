@@ -80,7 +80,7 @@ Protein intake was not randomized. Several factors may influence both protein ad
 
 ## DAG
 
-![](figures/dag.png){width=95%}
+![](figures/dag.png){width="95%"}
 
 ## 2. EXPLORATORY
 
@@ -98,11 +98,11 @@ table: deaths vs aki
 
 ## Logistic Regression Unadjusted {.smaller}
 
-![](figures/311_logistic_regression_unadjusted.png){width=90%}
+![](figures/311_logistic_regression_unadjusted.png){width="90%"}
 
 ## Logistic Regression Adjusted {.smaller}
 
-![](figures/312_logistic_regression_adjusted.png){width=90%}
+![](figures/312_logistic_regression_adjusted.png){width="90%"}
 
 ## 3. METHODS
 

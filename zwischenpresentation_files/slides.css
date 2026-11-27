@@ -1,0 +1,286 @@
+/* =====================================================================
+   LMU Munich — Intermediate Presentation (Quarto / RevealJS)
+   Designed for presentation.qmd: 1400 × 720, margin: 0, slide-level: 2.
+   Black titles/body/title rules; LMU green accents; compact figure slides.
+   ===================================================================== */
+
+:root {
+  --lmu-green: #00883a;
+  --lmu-green-dark: #006c30;
+  --ink: #111111;
+  --muted: #4b5563;
+  --hair: #d7dce0;
+  --soft: #edf7f0;
+}
+
+/* 1. Base typography and 16:9 slide canvas */
+.reveal {
+  --r-main-color: var(--ink);
+  --r-heading-color: var(--ink);
+  --r-link-color: var(--ink);
+  --r-link-color-hover: var(--lmu-green-dark);
+  font-family: "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 29px;
+  color: var(--ink);
+  --r-background-color: #ffffff;
+  background: #ffffff;
+}
+.reveal .slides { text-align: left; }
+.reveal .slides section { box-sizing: border-box; }
+
+/* Content slides: predictable margins with enough width for long headings. */
+.reveal .slides section:not(.cover) {
+  padding: 38px 78px 32px !important;
+  box-sizing: border-box !important;
+}
+.reveal .slides section:not(.cover) > h2 {
+  color: var(--ink) !important;
+  font-size: 42px;
+  line-height: 1.14;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  border-bottom: 3px solid #111 !important;
+  padding: 0 0 11px;
+  margin: 0 0 25px;
+  text-transform: none;
+}
+/* This heading is unusually long in the actual 16-slide presentation. */
+.reveal .slides section#logistic-regression-adjusted-model-and-odds-ratio-interpretation > h2 {
+  font-size: 35px;
+  letter-spacing: -0.025em;
+}
+
+.reveal p { line-height: 1.32; margin: 0.25em 0 0.55em; }
+.reveal ul { margin: 0.22em 0 0.48em 0.98em; }
+.reveal li { line-height: 1.32; margin: 0.23em 0; padding-left: 0.07em; }
+.reveal strong { color: var(--ink); font-weight: 730; }
+.reveal a { color: var(--ink); text-decoration-color: var(--lmu-green); }
+.reveal small, .reveal small p {
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.27;
+}
+
+/* 2. Every slide is pure white, including the cover.
+   Override Reveal/Quarto background layers as well as slide sections. */
+.reveal .backgrounds .slide-background {
+  background-color: #ffffff !important;
+}
+.reveal .backgrounds > .slide-background:first-child {
+  background-color: #fff !important;
+}
+.reveal .slides section:not(.cover) {
+  background: transparent !important;
+}
+
+/* White cover with centered text, WITHOUT any inset bands. */
+.reveal .slides section.cover {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 70px 96px !important;
+  margin: 0 !important;
+  text-align: center !important;
+  background: #fff !important;
+  border: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+/* Ensure slide 1 cannot cover other slides after Reveal advances. */
+.reveal .slides section.cover:not(.present) {
+  display: none !important;
+  visibility: hidden !important;
+}
+.reveal .slides section.cover::before,
+.reveal .slides section.cover::after {
+  content: none !important;
+}
+
+/* White fills the viewport, including margins outside the scaled cover slide. */
+.reveal:has(.slides section.cover.present) {
+  --r-background-color: #fff;
+  background: #fff !important;
+}
+.reveal:has(.slides section.cover.present) .backgrounds .slide-background.present {
+  background-color: #fff !important;
+}
+
+/* Keep the LMU footer visibly ABOVE the lower green band. */
+.reveal:has(.slides section.cover.present) .footer {
+  position: fixed !important;
+  bottom: 25px !important;
+  color: #111 !important;
+  z-index: 81 !important;
+}
+.reveal .slides section.cover > h2 {
+  color: var(--ink) !important;
+  font-size: 54px !important;
+  font-weight: 750;
+  line-height: 1.13;
+  letter-spacing: -0.028em;
+  text-transform: none;
+  text-align: center;
+  width: 100%;
+  max-width: 1160px;
+  border: 0 !important;
+  padding: 0 !important;
+  margin: 0 0 29px !important;
+}
+.reveal .slides section.cover > p {
+  color: var(--ink) !important;
+  font-size: 23px;
+  line-height: 1.35;
+  text-align: center !important;
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 0 15px !important;
+}
+.reveal .slides section.cover > p:first-of-type {
+  font-size: 25px;
+  font-weight: 650;
+  margin-bottom: 22px !important;
+}
+.reveal .slides section.cover small {
+  color: var(--muted) !important;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+/* 3. Two-column, research-question and formula slides */
+.reveal .columns {
+  align-items: flex-start;
+  gap: 40px;
+  margin: 10px 0 0;
+}
+.reveal .column { min-width: 0; }
+.reveal .column > p:first-child strong {
+  color: var(--ink);
+  font-size: 23px;
+  letter-spacing: 0.02em;
+}
+.reveal .column li { margin: 0.22em 0; }
+.reveal .question {
+  border-left: 6px solid var(--lmu-green);
+  background: var(--soft);
+  padding: 19px 25px;
+  margin: 20px 0 20px;
+  border-radius: 0 12px 12px 0;
+}
+.reveal .question p { font-size: 31px; line-height: 1.31; margin: 0; }
+.reveal .timeline {
+  border-top: 1px solid var(--hair);
+  padding-top: 13px;
+  margin-top: 21px;
+  text-align: center;
+  color: var(--ink);
+  font-size: 26px;
+  font-weight: 650;
+}
+.reveal .formula {
+  border-top: 1px solid var(--hair);
+  text-align: center;
+  padding: 16px 3px;
+  margin-top: 22px;
+  font-size: 27px;
+}
+.reveal .keyline {
+  border-top: 1px solid var(--hair);
+  padding-top: 12px;
+  margin-top: 20px;
+}
+.reveal .keyline p { font-size: 26px; color: var(--ink); }
+
+/* 4. Figure slides: prevent clipping and reserve room for captions. */
+.reveal .slides section:not(.cover) img {
+  max-width: 100% !important;
+  max-height: 465px !important;
+  height: auto;
+  object-fit: contain;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+.reveal .slides section:not(.cover) .cell-output-display,
+.reveal .slides section:not(.cover) .quarto-figure { max-width: 100%; }
+.reveal .slides section:not(.cover) .cell-output-display p { margin: 7px 0 13px; }
+
+/* Sensitivity overview contains both two columns and a figure. */
+.reveal .slides section#sensitivity-analyses { font-size: 27px; }
+
+/* 5. Study-population table (counts come from local data). */
+.reveal table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 26px;
+  margin: 22px 0 18px;
+}
+.reveal table th {
+  color: var(--ink);
+  border-bottom: 2px solid #111;
+  padding: 13px 15px;
+  font-weight: 700;
+}
+.reveal table td {
+  color: var(--ink);
+  border-bottom: 1px solid var(--hair);
+  padding: 12px 15px;
+}
+
+/* Final discussion slide. */
+.reveal .slides section.discussion p { margin: 0.16em 0 0.65em; }
+.reveal .slides section.discussion .keyline { margin-top: 16px; }
+
+/* 7. Reveal navigation, slide numbers and footer */
+.reveal .progress { color: var(--lmu-green); height: 4px; }
+.reveal .controls { color: var(--lmu-green); }
+.reveal .slide-number { font-size: 16px; color: var(--muted); }
+.reveal .footer { font-size: 15px; color: var(--muted); }
+
+
+---
+
+# 2) Add this CSS to `slides.css`
+
+Paste this at the bottom of your CSS:
+
+```css
+.flow-intro {
+  font-size: 0.72em;
+  line-height: 1.35;
+  margin: 0 0 18px 0;
+  padding: 14px 18px;
+  background: #f8f8f8;
+  border-left: 4px solid #000000;
+  border-radius: 6px;
+  color: #111111;
+}
+
+.reveal .slides section img {
+  max-width: 100% !important;
+}
+
+.reveal .slides section.flow-slide img {
+  max-height: 470px !important;
+  width: auto !important;
+  margin: 8px auto 0 auto !important;
+  display: block !important;
+}
+
+
+/* Distinguish terminology headings with green bullets */
+.reveal .slides section.terms-slide .term > p:first-child {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  margin-bottom: 8px !important;
+  color: #111111 !important;
+}
+
+.reveal .slides section.terms-slide .term > p:first-child::before {
+  content: "●";
+  color: #00883A;
+  font-size: 15px;
+  margin-right: 12px;
+  vertical-align: 2px;
+}

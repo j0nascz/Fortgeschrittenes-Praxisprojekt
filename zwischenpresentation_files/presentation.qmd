@@ -1,0 +1,516 @@
+---
+pagetitle: "Protein Intake and AKI — Intermediate Presentation"
+lang: en
+format:
+  revealjs:
+    theme: simple
+    css: slides.css
+    slide-level: 2
+    slide-number: c/t
+    navigation-mode: linear
+    transition: none
+    background-transition: none
+    center: false
+    width: 1400
+    height: 720
+    margin: 0
+    controls: true
+    progress: true
+    incremental: false
+    loop: false
+    hash: false
+    history: false
+    scroll-view: false
+    footer: "LMU Munich · Statistics and Data Science"
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| include: false
+# Use the existing project setup and existing assets/ mappings.
+source("../R/Packages.R", local = TRUE)
+source("R/figure_paths.R", local = TRUE)
+
+# Keep the local, project-relative dataset path already in use.
+# No patient-level data are embedded in the presentation.
+data <- haven::read_sav("../data/raw/Datenbank Praktikum FINAL.sav")
+
+data <- data %>%
+  select(
+    PatientID,
+    EuroScore2, ES2_Quart, ES2_Median,
+    BMI, BMI_Median, BMI_Quart,
+    Duration_of_cardiopulmonary_bypass_minutes,
+    Duration_of_CPB_Quart, Duration_of_CPB_Median,
+    SBP, SBP_Quart,
+    days_onexclusive_oral_feeding,
+    Protein_intake__d1_4,
+    Protein_intake_per_kg_on_day4,
+    AKI_any, AKI_any_early,
+    AKI_any_sensitivity_worst_case,
+    died_in_ICU
+  ) %>%
+  mutate(died_in_ICU = ifelse(died_in_ICU == "Yes", 1, 0)) %>%
+  relocate(
+    Duration_of_cardiopulmonary_bypass_minutes,
+    Duration_of_CPB_Quart,
+    Duration_of_CPB_Median,
+    .after = ES2_Median
+  )
+```
+
+## Protein Intake and Acute Kidney Injury {.cover}
+
+**Fortgeschrittenes Praxisprojekt · LMU Munich**
+
+Intermediate Presentation · 4 December 2026
+
+<small>Aymen Feki · Ilyes Lihidheb · Jonas Ziegler · Tom Baumann · Yassine Ben Ahmed</small>
+
+<small>Project partner: Wolfgang Hartl</small>
+
+## Background — Protein Intake and Kidney Function
+
+::: question
+In our project, we investigate the **relationship between protein intake during intensive care treatment and the subsequent development of acute kidney injury (AKI)** in cardiac surgery patients.
+:::
+
+**CLINICAL CONTEXT**
+
+- Acute kidney injury (AKI) is an important complication following cardiac surgery.
+- Nutritional support, including protein supplementation, is part of intensive care treatment.
+
+**CLINICAL UNCERTAINTY**
+
+- Higher protein intake may support recovery in critically ill patients.
+- However, its potential benefits and risks for kidney function remain debated.
+
+## Key clinical and study-design concepts clarify our analysis {.terms-slide}
+
+<style>
+.reveal .slides section.terms-slide {
+  padding: 42px 85px 65px !important;
+  box-sizing: border-box;
+  font-size: 24px !important;
+}
+
+.reveal .slides section.terms-slide h2 {
+  font-size: 36px !important;
+  line-height: 1.15 !important;
+  margin: 0 0 25px !important;
+  padding-bottom: 12px !important;
+  color: #111111 !important;
+  border-bottom: 3px solid #111111 !important;
+}
+
+.reveal .slides section.terms-slide .columns {
+  gap: 48px !important;
+  margin: 0 !important;
+  align-items: flex-start !important;
+}
+
+.reveal .slides section.terms-slide .term {
+  margin-bottom: 22px !important;
+}
+
+.reveal .slides section.terms-slide .term p {
+  font-size: 23px !important;
+  line-height: 1.27 !important;
+  margin: 0 0 7px !important;
+  color: #222222 !important;
+}
+
+.reveal .slides section.terms-slide .term p:first-child {
+  font-size: 24px !important;
+  margin-bottom: 8px !important;
+}
+
+.reveal .slides section.terms-slide strong {
+  color: #111111 !important;
+}
+</style>
+
+::::: columns
+::: {.column width="48%"}
+
+::: {.term}
+**AKI — Acute Kidney Injury**
+
+A sudden deterioration in kidney function, often detected by increased blood creatinine.
+:::
+
+::: {.term}
+**CPB — Cardiopulmonary Bypass**
+
+A heart-lung machine temporarily maintains blood circulation and oxygenation during cardiac surgery.
+:::
+
+::: {.term}
+**SBP — Systolic Blood Pressure**
+
+Blood pressure when the heart contracts. We use the **minimum SBP recorded during surgery**.
+:::
+
+::: {.term}
+**Study Design**
+
+The original trial was **prospective and randomized** (selenium vs. placebo). Our protein–AKI analysis is **observational and post-hoc**.
+:::
+
+:::
+
+::: {.column width="52%"}
+
+::: {.term}
+**Competing Risk**
+
+Death before AKI prevents its subsequent occurrence and complicates outcome analysis.
+:::
+
+::: {.term}
+**Artificial Protein Intake vs. Oral Feeding**
+
+**Artificial:** Protein delivered through nutritional support rather than normal eating.
+
+**Oral:** Nutrition consumed by mouth.
+
+The **treating physician determined the feeding approach** based on the patient's clinical condition; it was not randomized.
+:::
+
+:::
+:::::
+
+## Study population — Selection flowchart
+
+::: {.flow-intro}
+The original study was conducted from **2015 to 2021** at **23 centers in Germany and Canada (1416 patients)** to test whether **high-dose selenium could prevent postoperative organ dysfunction and death in high-risk patients undergoing cardiac surgery**.
+:::
+
+```{r}
+#| out-width: "100%"
+#| fig-align: center
+knitr::include_graphics(plot_path("flow"))
+```
+
+## Research question
+
+::: question
+Is **artificial protein intake during ICU days 1–4** associated with **new acute kidney injury (AKI) after day 4**?
+:::
+
+***Exposure and outcomes***
+
+::::: columns
+::: {.column width="48%"}
+**PROTEIN EXPOSURE**
+
+- Mean artificial protein intake, ICU days 1–4
+- Alternative: protein intake on day 4
+- Exclusive oral feeding days to consider 
+:::
+
+::: {.column width="52%"}
+**AKI OUTCOMES**
+
+- **Primary:** new AKI after day 4 (`AKI_any`)
+- **Secondary:** AKI on days 5–6 (`AKI_any_early`)
+- ICU death before AKI requires separate consideration(**Competing bias**)
+:::
+:::::
+
+::: timeline
+**Days 1–4: ** protein exposure　→　**Day 5 onward: ** AKI observation
+:::
+
+## Study population — AKI and ICU mortality
+
+```{r}
+#| echo: false
+# Use the already-loaded local dataset; no additional CSV or folders needed.
+stopifnot(
+  !anyDuplicated(data$PatientID),
+  all(is.na(data$AKI_any) | data$AKI_any %in% c(0, 1)),
+  all(is.na(data$died_in_ICU) | data$died_in_ICU %in% c(0, 1))
+)
+
+patient_table <- data.frame(
+  `Patient category` = c(
+    "Total number of patients",
+    "Patients who developed AKI",
+    "Patients without AKI who died in ICU",
+    "Patients without AKI who survived ICU"
+  ),
+  `Number of patients` = c(
+    nrow(data),
+    sum(data$AKI_any == 1, na.rm = TRUE),
+    sum(data$AKI_any == 0 & data$died_in_ICU == 1, na.rm = TRUE),
+    sum(data$AKI_any == 0 & data$died_in_ICU == 0, na.rm = TRUE)
+  ),
+  check.names = FALSE
+)
+
+knitr::kable(patient_table, align = c("l", "c"))
+```
+
+## Right Skewed Distribution of Artificial Protein Intake
+
+```{r}
+#| out-width: "88%"
+#| fig-align: center
+knitr::include_graphics(plot_path("density"))
+```
+
+## Oral Feeding , EUROSCORE II and CPB Duration May Be Associated With Protein Intake and AKI {.subgroup-slide}
+
+```{r}
+#| out-width: "70%"
+#| fig-align: center
+knitr::include_graphics(plot_path("confounders"))
+```
+
+## Potential confounding — DAG {.dag-slide}
+
+```{r}
+#| out-width: "68%"
+#| fig-align: center
+knitr::include_graphics(plot_path("dag"))
+```
+
+
+## ICU death and oral feeding complicate interpretation of the protein–AKI association {.clinical-context-slide}
+
+<style>
+.reveal .slides section.clinical-context-slide {
+  font-size: 23px !important;
+}
+
+.reveal .slides section.clinical-context-slide h2 {
+  font-size: 36px !important;
+  line-height: 1.12 !important;
+  margin-bottom: 28px !important;
+}
+
+.reveal .slides section.clinical-context-slide .columns {
+  gap: 65px !important;
+  align-items: flex-start !important;
+}
+
+.reveal .slides section.clinical-context-slide p,
+.reveal .slides section.clinical-context-slide li {
+  font-size: 21px !important;
+  line-height: 1.3 !important;
+}
+
+.reveal .slides section.clinical-context-slide li {
+  margin-bottom: 13px !important;
+}
+
+.reveal .slides section.clinical-context-slide strong {
+  color: #111111 !important;
+}
+
+.reveal .slides section.clinical-context-slide .bar-label {
+  font-size: 19px;
+  margin: 15px 0 6px;
+  color: #111111;
+}
+
+.reveal .slides section.clinical-context-slide .bar-track {
+  width: 100%;
+  height: 29px;
+  background: #eeeeee;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.reveal .slides section.clinical-context-slide .bar-fill {
+  height: 100%;
+  border-radius: 5px;
+}
+
+.reveal .slides section.clinical-context-slide .ratio-value {
+  font-size: 30px;
+  font-weight: 750;
+  color: #111111;
+  margin-top: 21px;
+}
+
+.reveal .slides section.clinical-context-slide .ratio-note {
+  font-size: 17px;
+  color: #555555;
+  line-height: 1.25;
+}
+
+.reveal .slides section.clinical-context-slide .clinical-note {
+  border-top: 1px solid #cccccc;
+  padding-top: 12px;
+  margin-top: 18px;
+}
+
+.reveal .slides section.clinical-context-slide .clinical-note p {
+  font-size: 17px !important;
+  color: #444444;
+}
+</style>
+
+::::: columns
+::: {.column width="48%"}
+
+**COMPETING EVENT: ICU DEATH**
+
+```{r}
+#| echo: false
+#| results: asis
+
+stopifnot(
+  all(is.na(data$AKI_any) | data$AKI_any %in% c(0, 1)),
+  all(is.na(data$died_in_ICU) | data$died_in_ICU %in% c(0, 1))
+)
+
+# Only patients without observed AKI
+no_aki <- data[
+  !is.na(data$AKI_any) & data$AKI_any == 0,
+]
+
+n_died <- sum(no_aki$died_in_ICU == 1, na.rm = TRUE)
+n_alive <- sum(no_aki$died_in_ICU == 0, na.rm = TRUE)
+n_missing <- sum(is.na(no_aki$died_in_ICU))
+
+# Compare deaths directly with survivors
+ratio <- if (n_alive > 0) {
+  100 * n_died / n_alive
+} else {
+  NA_real_
+}
+
+max_n <- max(n_died, n_alive, 1)
+
+width_died <- 100 * n_died / max_n
+width_alive <- 100 * n_alive / max_n
+
+ratio_label <- if (is.na(ratio)) {
+  "Not computable"
+} else {
+  sprintf("%.1f deaths per 100 survivors", ratio)
+}
+
+cat(sprintf('
+<div class="bar-label">
+  <strong>Died without AKI</strong> — %d patients
+</div>
+<div class="bar-track">
+  <div class="bar-fill"
+       style="width:%.3f%%;background:#222222;"></div>
+</div>
+
+<div class="bar-label">
+  <strong>Survived without AKI</strong> — %d patients
+</div>
+<div class="bar-track">
+  <div class="bar-fill"
+       style="width:%.3f%%;background:#00883A;"></div>
+</div>
+
+<div class="ratio-value">%s</div>
+<div class="ratio-note">
+</div>
+',
+n_died, width_died,
+n_alive, width_alive,
+ratio_label
+))
+
+if (n_missing > 0) {
+  cat(sprintf(
+    '<div class="ratio-note">ICU death status missing for %d patients.</div>',
+    n_missing
+  ))
+}
+```
+
+- Death before AKI is a **competing event**.
+- Patients who die can no longer develop AKI afterward.
+- Ignoring this may bias the interpretation of AKI occurrence.
+
+:::
+
+::: {.column width="52%"}
+
+**ORAL FEEDING AS CLINICAL INFORMATION**
+
+- Days on exclusive oral feeding may reflect **illness severity and recovery**.
+- The treating physician determined the feeding approach based on the patient's clinical condition.
+- Oral feeding is related to the amount of **artificial protein intake** administered.
+
+**IMPLICATIONS FOR OUR ANALYSIS**
+
+- Investigate the impact of ICU deaths through sensitivity analyses.
+- Examine oral-feeding information when assessing potential confounding.
+
+:::
+:::::
+
+## Logistic Regression Adjusted Model and Odds Ratio Interpretation
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("forest"))
+```
+
+## Sensitivity analyses
+
+```{r}
+#| out-width: "78%"
+#| fig-align: center
+knitr::include_graphics(plot_path("sensitivity"))
+```
+
+## Forest Plot (including best vs worst case)
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("best_worst"))
+```
+
+## Oral Feeding Forest Plot
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("oral"))
+```
+
+## Multinomial Regression
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("multinomial"))
+```
+
+## Interpretation and limitations {.interpretation-slide}
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("interpretation"))
+```
+
+## Discussion {.discussion}
+
+**01　Confounding**
+
+Does our DAG adequately reflect severity of illness and clinical treatment decisions?
+
+**02　Competing events**
+
+How should death before AKI be handled beyond the worst-case analysis?
+
+**03　Robustness**
+
+Which sensitivity analyses are most informative given available variables?

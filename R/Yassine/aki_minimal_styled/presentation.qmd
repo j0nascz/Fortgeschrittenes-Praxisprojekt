@@ -1,0 +1,315 @@
+---
+pagetitle: "Protein Intake and AKI — Intermediate Presentation"
+lang: en
+format:
+  revealjs:
+    theme: simple
+    css: slides.css
+    slide-level: 2
+    slide-number: c/t
+    navigation-mode: linear
+    transition: none
+    background-transition: none
+    center: false
+    width: 1400
+    height: 720
+    margin: 0
+    controls: true
+    progress: true
+    incremental: false
+    loop: false
+    hash: false
+    history: false
+    scroll-view: false
+    footer: "LMU Munich · Statistics and Data Science"
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| include: false
+# Use the existing project setup and existing assets/ mappings.
+source("../Packages.R", local = TRUE)
+source("R/figure_paths.R", local = TRUE)
+
+# Keep the local, project-relative dataset path already in use.
+# No patient-level data are embedded in the presentation.
+data <- haven::read_sav("../../../data/raw/Datenbank Praktikum FINAL.sav")
+
+data <- data %>%
+  select(
+    PatientID,
+    EuroScore2, ES2_Quart, ES2_Median,
+    BMI, BMI_Median, BMI_Quart,
+    Duration_of_cardiopulmonary_bypass_minutes,
+    Duration_of_CPB_Quart, Duration_of_CPB_Median,
+    SBP, SBP_Quart,
+    days_onexclusive_oral_feeding,
+    Protein_intake__d1_4,
+    Protein_intake_per_kg_on_day4,
+    AKI_any, AKI_any_early,
+    AKI_any_sensitivity_worst_case,
+    died_in_ICU
+  ) %>%
+  mutate(died_in_ICU = ifelse(died_in_ICU == "Yes", 1, 0)) %>%
+  relocate(
+    Duration_of_cardiopulmonary_bypass_minutes,
+    Duration_of_CPB_Quart,
+    Duration_of_CPB_Median,
+    .after = ES2_Median
+  )
+
+stopifnot(
+  is.data.frame(data),
+  all(c("PatientID", "AKI_any", "died_in_ICU") %in% names(data))
+)
+```
+
+## Protein Intake and Acute Kidney Injury {.cover}
+
+**Fortgeschrittenes Praxisprojekt · LMU Munich**
+
+Intermediate Presentation · 4 December 2026
+
+<small>Aymen Feki · Ilyes Lihidheb · Jonas Ziegler · Tom Baumann · Yassine Ben Ahmed</small>
+
+<small>Project partner: Wolfgang Hartl</small>
+
+## Data Source: The SUSTAIN CSX Trial {.smaller}
+
+**Original study**
+
+- Multicenter, randomized, double-blind, placebo-controlled trial
+- Investigated high-dose selenium supplementation in cardiac surgery patients
+- Conducted from 2015 to 2021 at 23 centers in Germany and Canada
+- **1,416 patients randomized**
+
+
+## Research question
+
+::: question
+Is **artificial protein intake during ICU days 1–4** associated with **new acute kidney injury (AKI) after day 4**?
+:::
+
+- Selected cardiac surgery patients from the SUSTAIN CSX trial
+- Artificial protein intake determined by clinical practice, not randomized
+- Observational post-hoc analysis of protein exposure and subsequent AKI
+
+## Exposure and outcomes
+
+::::: columns
+::: {.column width="48%"}
+**PROTEIN EXPOSURE**
+
+- Mean artificial protein intake, ICU days 1–4
+- Alternative: protein intake on day 4
+- Show units on all figures
+:::
+
+::: {.column width="52%"}
+**AKI OUTCOMES**
+
+- **Primary:** new AKI after day 4 (`AKI_any`)
+- **Secondary:** AKI on days 5–6 (`AKI_any_early`)
+- ICU death before AKI requires separate consideration
+:::
+:::::
+
+::: timeline
+**Days 1–4:** protein exposure　→　**Day 5 onward:** AKI observation
+:::
+
+## Study population — Selection flowchart
+
+```{r}
+#| out-width: "85%"
+#| fig-align: center
+knitr::include_graphics(plot_path("flow"))
+```
+
+## Study population — AKI and ICU mortality
+
+```{r}
+#| echo: false
+# Use the already-loaded local dataset; no additional CSV or folders needed.
+stopifnot(
+  !anyDuplicated(data$PatientID),
+  all(is.na(data$AKI_any) | data$AKI_any %in% c(0, 1)),
+  all(is.na(data$died_in_ICU) | data$died_in_ICU %in% c(0, 1))
+)
+
+patient_table <- data.frame(
+  `Patient category` = c(
+    "Total number of patients",
+    "Patients who developed AKI",
+    "Patients without AKI who died in ICU",
+    "Patients without AKI who survived ICU"
+  ),
+  `Number of patients` = c(
+    nrow(data),
+    sum(data$AKI_any == 1, na.rm = TRUE),
+    sum(data$AKI_any == 0 & data$died_in_ICU == 1, na.rm = TRUE),
+    sum(data$AKI_any == 0 & data$died_in_ICU == 0, na.rm = TRUE)
+  ),
+  check.names = FALSE
+)
+
+knitr::kable(patient_table, align = c("l", "c"))
+```
+
+<small>The two groups without observed AKI are distinguished by ICU death status. Missing outcomes, if any, are not assigned to these groups.</small>
+
+## EDA — Distribution of protein intake
+
+```{r}
+#| out-width: "88%"
+#| fig-align: center
+knitr::include_graphics(plot_path("density"))
+```
+
+<small>Describe median, IQR and the proportion of patients with zero recorded artificial protein intake.</small>
+
+## Associations with Potential Confounders {.subgroup-slide}
+
+```{r}
+#| out-width: "70%"
+#| fig-align: center
+knitr::include_graphics(plot_path("confounders"))
+```
+
+<small>Subgroup comparisons are exploratory and require formal interaction testing.</small>
+
+## Potential confounding — DAG {.dag-slide}
+
+```{r}
+#| out-width: "68%"
+#| fig-align: center
+knitr::include_graphics(plot_path("dag"))
+```
+
+<small>The DAG represents causal assumptions and informs our covariate adjustment strategy.</small>
+
+## Statistical approach
+
+::::: columns
+::: {.column width="47%"}
+**LOGISTIC REGRESSION**
+
+- Primary outcome: `AKI_any`
+- Primary exposure: days 1–4 protein intake
+- Crude and adjusted models
+- Odds ratios with 95% confidence intervals
+:::
+
+::: {.column width="53%"}
+**ADJUSTMENT CANDIDATES**
+
+- EuroSCORE II and BMI
+- Cardiopulmonary bypass duration
+- Intraoperative systolic blood pressure
+- Confounder choice informed by the DAG
+:::
+:::::
+
+::: formula
+$\operatorname{logit}\{P(\mathrm{AKI}=1)\} = \beta_0 + \beta_1\,\mathrm{Protein} + \boldsymbol{\gamma}^{\mathsf T}\mathbf X$
+:::
+
+## Logistic Regression Adjusted Model and Odds Ratio Interpretation
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("not"))
+```
+
+<small>Show crude versus adjusted protein–AKI odds ratios with 95% CIs, the exposure increment and the sample size. Reference: OR = 1.</small>
+
+## Sensitivity analyses
+
+::::: columns
+::: {.column width="50%"}
+**ORAL FEEDING**
+
+Assess sensitivity of estimated protein–AKI associations to oral-feeding information.
+:::
+
+::: {.column width="50%"}
+**DEATH BEFORE AKI**
+
+Compare primary AKI with the worst-case definition that reclassifies ICU deaths without observed AKI.
+:::
+:::::
+
+```{r}
+#| out-width: "78%"
+#| fig-align: center
+knitr::include_graphics(plot_path("sensitivity"))
+```
+
+## Forest Plot (including best vs worst case)
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("not"))
+```
+
+## Oral Feeding Forest Plot
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("not"))
+```
+
+## Multinomial Regression
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("not"))
+```
+
+## Interpretation and limitations {.interpretation-slide}
+
+```{r}
+#| out-width: "91%"
+#| fig-align: center
+knitr::include_graphics(plot_path("not"))
+```
+
+**WHAT THE ANALYSIS CAN SHOW**
+
+- Magnitude and uncertainty of the protein–AKI association
+- Sensitivity to alternative definitions and adjustment choices
+
+**KEY LIMITATIONS**
+
+- Nonrandomized protein intake; residual confounding
+- Selection limited to ICU stays **\> 4 days**
+- Death can prevent observation of AKI
+
+::: keyline
+**Association does not establish causation.**
+:::
+
+## Discussion {.discussion}
+
+**01　Confounding**
+
+Does our DAG adequately reflect severity of illness and clinical treatment decisions?
+
+**02　Competing events**
+
+How should death before AKI be handled beyond the worst-case analysis?
+
+**03　Robustness**
+
+Which sensitivity analyses are most informative given available variables?
+
+::: keyline
+**Feedback:** Are our model assumptions and sensitivity strategy defensible?
+:::

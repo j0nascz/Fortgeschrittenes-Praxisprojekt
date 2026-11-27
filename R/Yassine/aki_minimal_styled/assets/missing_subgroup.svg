@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="430" viewBox="0 0 1100 430">
+<rect x="10" y="10" width="1080" height="410" rx="22" fill="#f2f6fa" stroke="#bacbd7" stroke-width="3"/>
+<text x="550" y="132" text-anchor="middle" font-family="Arial" font-size="35" font-weight="bold" fill="#16253e">Subgroup comparison</text>
+<text x="550" y="203" text-anchor="middle" font-family="Arial" font-size="27" fill="#a13b37">Real project figure not found</text>
+<text x="550" y="263" text-anchor="middle" font-family="Arial" font-size="19" fill="#52627a">Update R/figure_paths.R to use your existing exported plot:</text>
+<text x="550" y="300" text-anchor="middle" font-family="monospace" font-size="19" fill="#16253e">assets/subgroup_forest.png</text>
+<text x="550" y="370" text-anchor="middle" font-family="Arial" font-size="17" fill="#52627a">No patient results are inferred or simulated here.</text>
+</svg>

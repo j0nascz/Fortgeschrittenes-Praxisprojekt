@@ -1,0 +1,120 @@
+/* Minimal academic palette: deep navy, teal, and cool neutrals */
+:root { --navy:#172b46; --teal:#087c88; --ink:#24344b; --muted:#586b80; --hair:#dce6eb; --soft:#eef6f7; }
+.reveal { font-family: "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif; color:var(--ink); font-size:33px; background:#fff; }
+.reveal .slides { text-align:left; }
+.reveal .slides section { box-sizing:border-box; }
+.reveal h2 { color:var(--navy); font-size:1.38em; font-weight:750; letter-spacing:-.025em; line-height:1.12; margin:0 0 .74em; border-bottom:3px solid var(--teal); padding-bottom:.22em; }
+.reveal p { line-height:1.35; margin:.34em 0 .65em; }
+.reveal ul { margin:.25em 0 .6em .92em; }
+.reveal li { line-height:1.38; margin:.28em 0; padding-left:.12em; }
+.reveal strong { color:var(--navy); font-weight:730; }
+.reveal .columns { align-items:start; gap:2.2rem; margin-top:.6em; }
+.reveal .column { min-width:0; }
+.reveal .column > p:first-child strong { color:var(--teal); font-size:.8em; letter-spacing:.07em; }
+.reveal .question { border-left:6px solid var(--teal); background:var(--soft); padding:22px 27px; border-radius:0 13px 13px 0; margin:1.15em 0 1em; }
+.reveal .question p { font-size:1.03em; line-height:1.35; margin:0; }
+.reveal .timeline { margin-top:1.25em; border-top:1px solid var(--hair); padding-top:18px; color:var(--teal); text-align:center; font-weight:680; }
+.reveal .formula { text-align:center; padding:17px 12px; border-top:1px solid var(--hair); margin-top:1em; font-size:.88em; }
+.reveal .keyline { border-top:1px solid var(--hair); margin-top:1.1em; padding-top:14px; }
+.reveal .keyline p { color:var(--teal); font-size:.9em; }
+.reveal small, .reveal small p { color:var(--muted); font-size:.67em; line-height:1.3; }
+.reveal img { max-height:405px; width:auto; object-fit:contain; box-shadow:none; border:0; }
+.reveal .slide-number { font-size:17px; color:var(--muted); }
+.reveal .progress { color:var(--teal); height:4px; }
+.reveal .controls { color:var(--teal); }
+.reveal .footer { color:var(--muted); font-size:15px; }
+.reveal .cover { background:var(--navy); color:#ecf4f9; padding:66px 72px; }
+.reveal .cover h2 { color:#ffffff; font-size:1.67em; line-height:1.12; border:0; margin:0 0 .33em; padding:0; max-width:1000px; }
+.reveal .cover p { color:#e0eaf1; margin:.4em 0; }
+.reveal .cover p:nth-of-type(1) { font-size:1.12em; color:#72d4db; font-weight:650; margin-bottom:1.3em; }
+.reveal .cover strong { color:#fff; }
+.reveal .cover small { color:#bfcfdc; }
+.reveal .discussion h2 { border-bottom-color:var(--teal); }
+.reveal .discussion p { margin:.28em 0 .9em; }
+/* Keep plots and text from overflowing compact 16:9 slides */
+.reveal .slides section[data-background-color] { background-size:cover; }
+
+/* Slide 11: tighter vertical rhythm to keep the conclusion fully visible */
+.reveal .slides section.interpretation-slide { font-size: 0.88em; }
+.reveal .slides section.interpretation-slide h2 { margin-bottom: .45em; }
+.reveal .slides section.interpretation-slide p { margin: .18em 0 .35em; }
+.reveal .slides section.interpretation-slide ul { margin: .12em 0 .33em .92em; }
+.reveal .slides section.interpretation-slide li { line-height: 1.23; margin: .12em 0; }
+.reveal .slides section.interpretation-slide .keyline { margin-top: .38em; padding-top: 9px; }
+.reveal .slides section.interpretation-slide .keyline p { font-size: .92em; line-height: 1.18; margin: .08em 0; }
+
+
+
+/* ===== TITLE SLIDE: PERFECTLY CENTERED ===== */
+
+.reveal .slides section.cover {
+  background: #ffffff !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  padding: 40px 80px !important;
+  box-sizing: border-box !important;
+  text-align: center !important;
+}
+
+.reveal .slides section.cover h2 {
+  font-size: 52px !important;
+  font-weight: 700;
+  color: #10274b;
+  text-align: center !important;
+  text-transform: none;
+  margin: 0 0 35px 0 !important;
+}
+
+.reveal .slides section.cover p {
+  font-size: 21px;
+  line-height: 1.5;
+  text-align: center !important;
+  margin: 0 0 22px 0 !important;
+  color: #334155;
+}
+
+.reveal .slides section.cover small {
+  font-size: 16px;
+  color: #64748b;
+}
+
+/* More horizontal breathing room on all content slides */
+
+.reveal .slides section:not(.cover) {
+  padding-left: 85px !important;
+  padding-right: 85px !important;
+  box-sizing: border-box !important;
+}
+
+/* Give DAG and subgroup figures breathing room */
+
+.reveal .slides section.dag-slide,
+.reveal .slides section.subgroup-slide {
+  padding: 45px 130px !important;
+  box-sizing: border-box !important;
+}
+
+.reveal .slides section.dag-slide img,
+.reveal .slides section.subgroup-slide img {
+  display: block !important;
+  box-sizing: border-box !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  max-width: 100% !important;
+  max-height: 450px !important;
+
+  padding: 20px !important;
+  margin: 20px auto !important;
+
+  object-fit: contain !important;
+}
+
